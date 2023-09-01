@@ -1,6 +1,6 @@
 {
   "name": "hop-query-builder",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "utility library for HOP queries",
   "main": "src/index.js",
   "type": "module",
@@ -22,5 +22,8 @@
   "bugs": {
     "url": "https://github.com/healthscience/hop-query-builder/issues"
   },
-  "homepage": "https://github.com/healthscience/hop-query-builder#readme"
+  "homepage": "https://github.com/healthscience/hop-query-builder#readme",
+  "dependencies": {
+    "librarycomposer": "^0.3.1"
+  }
 }
