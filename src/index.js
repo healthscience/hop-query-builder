@@ -94,6 +94,23 @@ class HopQuerybuilder extends EventEmitter {
       let match = this.modulesStart.data.filter(e => e.type === mtype)
       minStartlist.push(match)
     }
+    // form modinfo structure for SF-ECS
+    for (let mod of minStartlist) {
+      console.log('mode')
+      console.log(mod)
+    }
+    // need to make refContract question and data packaging
+    // let makeRefContract = this.()
+    for (let refC of genesisMods) {
+      if (refC.value.refcontract === 'compute') {
+        console.log('ref compute')
+        console.log(refC)
+      } else if (refC.value.refcontract === 'visualise') {
+        console.log('ref vis')
+        console.log(refC)
+      }
+    }
+
     let minModulesList = {}
     minModulesList.action = 'tempmodule'
     minModulesList.data = minStartlist
