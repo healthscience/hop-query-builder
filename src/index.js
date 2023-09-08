@@ -95,26 +95,46 @@ class HopQuerybuilder extends EventEmitter {
       minStartlist.push(match)
     }
     // form modinfo structure for SF-ECS
+    let question = {}
     for (let mod of minStartlist) {
       console.log('mode')
       console.log(mod)
+      if (mod[0].type === 'question') {
+        console.log('question')
+        console.log(mod)
+        question = mod[0]
+      }
     }
     // need to make refContract question and data packaging
     // let makeRefContract = this.()
+    let tempGenRefs = {}
     for (let refC of genesisMods) {
+      console.log('ref-publiclib')
+      console.log(refC.value)
       if (refC.value.refcontract === 'compute') {
         console.log('ref compute')
         console.log(refC)
+        tempGenRefs.compute = refC
       } else if (refC.value.refcontract === 'visualise') {
         console.log('ref vis')
         console.log(refC)
+        tempGenRefs.visualise = refC
+      } else if(refC.value.refcontract === 'question') {
+        console.log('question')
+        console.log(refC)
+        tempGenRefs.question = refC
+      } else if(refC.value.refcontract === 'packaging') {
+        console.log('data')
+        console.log(refC)
+        tempGenRefs.data = refC
       }
     }
-
+    console.log('tempGenesis- structure ready>>>')
+    console.log(tempGenRefs)
     let minModulesList = {}
     minModulesList.action = 'tempmodule'
     minModulesList.data = minStartlist
-    let tempMods = this.queryInputs(minModulesList)
+    let tempMods = this.queryInputs(tempGenRefs)
     return tempMods
   }
 
