@@ -28,27 +28,28 @@ class HopQuerybuilder extends EventEmitter {
   *
   */
   queryInputs = function (query) {
+    console.log('HQB--Qinputs')
+    console.log(query)
     let safeFlowquery = {}
     if (query.action === 'tempmodule') {
       // create new temp modules from network
       console.log('HQB--temp mod list start')
       console.log(query)
-      let modCount = 1
-      let moduleHolder = []
-      for (const mc of query.data) {
-        console.log(mc)
-        const prepareModule = this.liveComposer.liveComposer.moduleComposer(mc, '')
-        let moduleContainer = {}
-        moduleContainer.name = prepareModule.data.contract.concept.type
-        moduleContainer.id = modCount
-        moduleContainer.refcont = prepareModule.data.hash
-        moduleHolder.push(moduleContainer)
-        modCount++
-      }
-      let moduleTempData = {}
-      moduleTempData.type = 'modulesTemp'
-      moduleTempData.data = moduleHolder
+      let ECSbundle = {}
+      // npx contract UUID-temp  see structure at https://design.penpot.app/#/view/e8b3498a-41f9-8006-8001-7af986efdd68?page-id=279589f6-a428-8012-8001-fee517df51ef&section=interactions&index=0
+      // array of expanded modules
+      // structure NXP to send to HOP
+      let message = {}
+      message.type = 'safeflow'
+      message.reftype = 'ignore'
+      message.action = 'networkexperiment'
+      message.data = ECSbundle
+      // console.log('OUTmesssage+++++++++OUT+FIRST++++++')
+      // console.log(message)
+
     } else if (query.action === 'genesis') {
+      console.log('HQB--geneiss start')
+      console.log(message.data)
       let moduleGenesisList = []
       let moduleGenesisExpanded = []
       let newModCount = message.data.length
@@ -86,7 +87,7 @@ class HopQuerybuilder extends EventEmitter {
   minModules = function (beebeeIN, genesisMods) {
     console.log('HQB---minModule')
     console.log(beebeeIN)
-    console.log(genesisMods)
+    // console.log(genesisMods)
     // get temp contract keys for question, data, compute, visualisation
     let ModulesMinrequired = ['question', 'data', 'compute', 'visualise']
     let minStartlist = []
@@ -97,11 +98,11 @@ class HopQuerybuilder extends EventEmitter {
     // form modinfo structure for SF-ECS
     let question = {}
     for (let mod of minStartlist) {
-      console.log('mode')
-      console.log(mod)
+      // console.log('mode')
+      // console.log(mod)
       if (mod[0].type === 'question') {
-        console.log('question')
-        console.log(mod)
+        // console.log('question')
+        // console.log(mod)
         question = mod[0]
       }
     }
@@ -109,32 +110,37 @@ class HopQuerybuilder extends EventEmitter {
     // let makeRefContract = this.()
     let tempGenRefs = {}
     for (let refC of genesisMods) {
-      console.log('ref-publiclib')
-      console.log(refC.value)
+      // console.log('ref-publiclib')
+      // console.log(refC.value)
       if (refC.value.refcontract === 'compute') {
-        console.log('ref compute')
-        console.log(refC)
+        // console.log('ref compute')
+        // console.log(refC)
         tempGenRefs.compute = refC
       } else if (refC.value.refcontract === 'visualise') {
-        console.log('ref vis')
-        console.log(refC)
+        // console.log('ref vis')
+        // console.log(refC)
         tempGenRefs.visualise = refC
       } else if(refC.value.refcontract === 'question') {
-        console.log('question')
-        console.log(refC)
+        // console.log('question')
+        // console.log(refC)
         tempGenRefs.question = refC
       } else if(refC.value.refcontract === 'packaging') {
-        console.log('data')
-        console.log(refC)
+        // console.log('data')
+        // console.log(refC)
         tempGenRefs.data = refC
       }
     }
+    tempGenRefs.question = {}
+    tempGenRefs.question.key = '123456789'
+    tempGenRefs.question.value = question
     console.log('tempGenesis- structure ready>>>')
     console.log(tempGenRefs)
     let minModulesList = {}
     minModulesList.action = 'tempmodule'
-    minModulesList.data = minStartlist
-    let tempMods = this.queryInputs(tempGenRefs)
+    minModulesList.data = tempGenRefs
+    let tempMods = this.queryInputs(minModulesList)
+    console.log('HQB--safeflow ready query')
+    console.log(tempMods)
     return tempMods
   }
 
