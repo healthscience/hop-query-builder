@@ -1,4 +1,5 @@
 'use strict'
+import { timeStamp } from 'console'
 /**
 *  HOP query builder library
 *
@@ -19,75 +20,53 @@ class HopQuerybuilder extends EventEmitter {
     console.log('HQB--live')
     this.liveComposer = new LibComposer()
     this.modulesStart = this.modulesGenesis()
-    // this.queryInputs(this.modulesStart)
   }
 
   /**
-  * Prepare minimum modules
-  * @method minModules
+  * Prepare module contracts for different entry paths
+  * @method queryPath
   *
   */
-  minModules = function (beebeeIN, genesisMods) {
-    console.log('HQB---minModule')
+  queryPath = function (beebeeIN, publicLib, fileInfo) {
+    console.log('HQB---wich path for Module Contracts to follow')
+    // console.log(this.modulesStart)
     // console.log(beebeeIN)
-    // console.log(genesisMods)
-    // console.log(genesisMods)
-    // get temp contract keys for question, data, compute, visualisation
+    // console.log(publicLib)
+    let formSFquery = {}
+    if (beebeeIN.action === 'blind') {
+      formSFquery = this.blindPath(beebeeIN, publicLib, fileInfo)
+    } else if (beebeeIN.action === 'library') {
+      formSFquery = this.libraryPath()
+    }
+    return formSFquery
+  }
+
+  /**
+  * Prepare module contracts for different entry paths
+  * @method pathModules
+  *
+  */
+  blindPath = function (beebeeIN, publicLib, fileInfo) {
+    console.log('HQB====start build blind to contracts')
+    // Reduce Genesis Module Contracts for question, data, compute, visualisation
     let ModulesMinrequired = ['question', 'data', 'compute', 'visualise']
     let minStartlist = []
     for (const mtype of ModulesMinrequired) {
       let match = this.modulesStart.data.filter(e => e.type === mtype)
-      minStartlist.push(match)
+      minStartlist.push(match[0])
     }
-    // form modinfo structure for SF-ECS
-    let question = {}
-    for (let mod of minStartlist) {
-      // console.log('mode')
-      // console.log(mod)
-      if (mod[0].type === 'question') {
-        // console.log('question')
-        // console.log(mod)
-        question = mod[0]
-      }
-    }
-    // need to make refContract question and data packaging
-    // let makeRefContract = this.()
-    let exisitingModules = []
-    let tempGenRefs = {}
-    for (let refC of genesisMods) {
-      if (refC.value.refcontract === 'module') {
-        exisitingModules.push(refC)
-      }
-      if (refC.value.refcontract === 'compute') {
-        // console.log('ref compute')
-        // console.log(refC)
-        tempGenRefs.compute = refC
-      } else if (refC.value.refcontract === 'visualise') {
-        // console.log('ref vis')
-        // console.log(refC)
-        tempGenRefs.visualise = refC
-      } else if(refC.value.refcontract === 'question') {
-        // console.log('question')
-        // console.log(refC)
-        tempGenRefs.question = refC
-      } else if(refC.value.refcontract === 'packaging') {
-        // console.log('data')
-        // console.log(refC)
-        tempGenRefs.data = refC
-      }
-    }
-    tempGenRefs.question = {}
-    tempGenRefs.question.key = '123456789'
-    tempGenRefs.question.value = question
-    // console.log('tempGenesis- structure ready>>>')
-    // console.log(tempGenRefs)
-    let minModulesList = {}
-    minModulesList.action = 'tempmodule'
-    minModulesList.data = tempGenRefs
-    let tempMods = this.queryInputs(minModulesList, exisitingModules)
-    console.log('HQB--safeflow ready query')
-    console.log(tempMods)
-    return tempMods
+    // take the genesis and make new instances of the Module Contracts i.e. unique keys
+    let tempModContracts = this.tempModuleContractsCreate(minStartlist)
+    // extract data, compute and visualisation ref contracts
+    let contractsPublic = this.splitMCfromRC(publicLib)
+    // extract out observaation compute and charing ref contracts,  data more work required, need save data and then create new data packaging contract
+    let extractedRefs = this.extractRefContractsPublicLib(contractsPublic.reference, fileInfo)
+    console.log('ref contract matched')
+    console.log(extractedRefs)
+    // need to make refContract question and data packaging (for blind question input from beebee Done above)
+    // next assume joined so provide finalised structure for SF-ECS
+    let tempRefContsSF = this.prepareSafeFlowStucture(extractedRefs)
+    return tempRefContsSF
   }
 
   /**
@@ -95,29 +74,17 @@ class HopQuerybuilder extends EventEmitter {
   * @method queryInputs
   *
   */
-  queryInputs = function (query, existingMods) {
+  queryInputs = async function (contractBoth) {
     console.log('HQB--Qinputs')
-    // console.log(query)
-    // console.log(existingMods)
-    // console.log('view details mods')
-    /* for (let mod of existingMods) {
-      console.log('mod')
-      console.log(mod.value.info)
-    } */
     let safeFlowquery = {}
-    let message = {}
-    if (query.action === 'tempmodule') {
+    if (contractBoth.action === 'tempmodule') {
+      console.log('tempmodule---PATH')
       // create new temp JOIN modules from network
-      console.log('HQB--temp mod list start')
-      // console.log(query)
-      // turn expanded modules in an array
-      let prepareJoinStrucutre = this.joinStructurePrep(existingMods)
-      console.log('extrat JOIN structure===========================')
-      console.log(prepareJoinStrucutre)
+      let prepareJoinStrucutre = this.joinStructurePrep(contractBoth.data)
       // make list of Module Contract in array
       let moduleList = []
       for (let mod of prepareJoinStrucutre) {
-        moduleList.push(mod.hash)
+        moduleList.push(mod.key)
       }
       let ECSbundle = {}
       // npx contract UUID-temp  see structure at https://design.penpot.app/#/view/e8b3498a-41f9-8006-8001-7af986efdd68?page-id=279589f6-a428-8012-8001-fee517df51ef&section=interactions&index=0
@@ -131,22 +98,19 @@ class HopQuerybuilder extends EventEmitter {
       ECSbundle.exp.value.space = { concept: 'mind' }
       // the modules expanded in an array
       ECSbundle.modules = prepareJoinStrucutre
-      message.type = 'safeflow'
-      message.reftype = 'ignore'
-      message.action = 'networkexperiment'
-      message.data = ECSbundle
-      // console.log('OUTmesssage+++++++++OUT+FIRST++++++')
-      // console.log(message)
+      safeFlowquery.type = 'safeflow'
+      safeFlowquery.reftype = 'ignore'
+      safeFlowquery.action = 'networkexperiment'
+      safeFlowquery.data = ECSbundle
     } else if (query.action === 'genesis') {
       console.log('HQB--geneiss start')
-      console.log(message.data)
       let moduleGenesisList = []
       let moduleGenesisExpanded = []
       let newModCount = message.data.length
       for (let mh of message.data) {
         const moduleRefContract = this.liveComposer.moduleComposer(mh, '')
         // const moduleRefContractReady = JSON.stringify(moduleRefContract)
-        // const savedFeedback = await this.liveHolepunch.BeeData.savePubliclibrary(moduleRefContract)
+        const savedFeedback = await this.liveHolepunch.BeeData.savePubliclibrary(moduleRefContract)
         moduleGenesisList.push(savedFeedback.key)
         // stand key value format or query and get back ref contract double check TODO
         let moduleContract = {}
@@ -159,13 +123,12 @@ class HopQuerybuilder extends EventEmitter {
         // aggregate all modules into exeriment contract
         let genesisRefContract = this.liveComposer.experimentComposerGenesis(moduleGenesisList)
         // double check they are created
-        // const savedFeedback = await this.liveHolepunch.BeeData.savePubliclibrary(genesisRefContract)
-        // savedFeedback.expanded = moduleGenesisExpanded
+        const savedFeedback = await this.liveHolepunch.BeeData.savePubliclibrary(genesisRefContract)
+        savedFeedback.expanded = moduleGenesisExpanded
       }
-    } else if (query.action === 'update') {
+    } else if (contractBoth.action === 'update') {
 
     }
-    safeFlowquery = message
     return safeFlowquery
   }
 
@@ -174,13 +137,14 @@ class HopQuerybuilder extends EventEmitter {
   * @method joinStructurePrep
   *
   */
-  joinStructurePrep = function (modules) {
+  joinStructurePrep = function (contracts) {
     let newModCount = 4
     let moduleJoinedExpanded = []
     let peerModules = {}
-    for (let mh of modules) {
+    for (let mh of contracts.modules) {
       // prepare new modules for this peer  ledger
-      // look up module template genesis contract
+      console.log('module Genesis')
+      console.log(mh)
       if (mh.value.info.moduleinfo.name === 'question') {
         peerModules.type = 'question'
         peerModules.question = mh.value.info.question
@@ -215,6 +179,41 @@ class HopQuerybuilder extends EventEmitter {
       console.log('temp holding NXP Module Contract')
       console.log(joinRefContract)
     }
+    // manually create Module Contracts
+    // question
+    // ref contract
+    /* let qRC = {}
+    qRC.forum = ''
+    qRC.text = 'Bitcoin 2017 price'
+    let questionMC = {}
+    questionMC.key = 'd0497a14581692e3e82c8f559e42e0a8231ca0e2'
+    questionMC.value = {}
+    questionMC.value.info = {}
+    questionMC.value.info.question = qRC
+    questionMC.value.info.type = 'question'
+    questionMC.value.refcontract = 'module'
+    questionMC.value.type = 'question'
+    moduleJoinedExpanded.push(questionMC)
+    // data packaging
+    let dataMC = {}
+    // ref contract to embedd
+    let dRC = {}
+    dRC.forum = ''
+    dRC.text = ''
+    dataMC.key = '82cd27bab9ac3ed4db3b7964a1f387ba0cb34a30'
+    dataMC.value = {}
+    dataMC.value.info = {}
+    dataMC.value.info.data = dRC
+    dataMC.value.info.type = 'data'
+    dataMC.value.refcontract = 'module'
+    dataMC.value.type = 'data'
+    moduleJoinedExpanded.push(dataMC)
+    // compute
+    let comuputeMC = {}
+    moduleJoinedExpanded.push(computeMC)
+    // visualise
+    let visMC = {}
+    moduleJoinedExpanded.push(visMC) */
     return moduleJoinedExpanded
   }
 
@@ -350,6 +349,155 @@ class HopQuerybuilder extends EventEmitter {
     genesisModules.action = 'tempmodule'
     genesisModules.data = moduleContracts
     return genesisModules
+  }
+
+  /**
+  * Module Contract Available to network
+  * @method tempModuleContractsCreate
+  *
+  */
+  tempModuleContractsCreate = function (gMods) { 
+    // create new temp modules for new experiment
+    let modCount = 1
+    let moduleHolder = []
+    for (const mc of gMods) {
+      const prepareModule = this.liveComposer.liveComposer.moduleComposer(mc, '')
+      let moduleContainer = {}
+      moduleContainer.name = prepareModule.data.contract.concept.type
+      moduleContainer.id = modCount
+      moduleContainer.refcont = prepareModule.data.hash
+      moduleHolder.push(moduleContainer)
+      modCount++
+    }
+    return moduleHolder
+  }
+
+  /**
+  * Module Contract Available to network
+  * @method splitMCfromRC
+  *
+  */
+  splitMCfromRC = function (publicLib) {
+    // split into Module Contracts and Reference Contracts
+    let modContracts = []
+    let refContracts = []
+    for (let pubLib of publicLib) {
+      if (pubLib?.value.refcontract === 'module') {
+        modContracts.push(pubLib)
+      } else {
+        refContracts.push(pubLib)
+      }
+    }
+    let contractList = {}
+    contractList.modules = modContracts
+    contractList.reference = refContracts
+    return contractList
+  }
+
+  /**
+  * Build blind reference contracts
+  * @method rextractRefContractsPublicLib
+  *
+  */
+  extractRefContractsPublicLib = function (refContracts, fileName) {
+    let refBuilds = []
+    for (let rc of refContracts) {
+      if (rc.value.refcontract === 'compute' && rc.value.computational.name === 'observation') {
+        refBuilds.push(rc)
+      } else if (rc.value.refcontract === 'visualise' && rc.value.computational.name === 'chart.js library') {
+        refBuilds.push(rc)
+      }
+      /* else if (rc.value.refcontract === 'packaging') {
+        console.log('reccc')
+        console.log(rc)
+        console.log(rc.value)
+        refBuilds.push(rc)
+      } */
+    }
+    // need to build a custom data packaging ref contract
+    const newPackagingMap = {}
+    newPackagingMap.name = fileName
+    newPackagingMap.description = fileName
+    newPackagingMap.primary = 'true'
+    newPackagingMap.api = 'json'
+    newPackagingMap.apibase = ''
+    newPackagingMap.apipath = ''
+    newPackagingMap.filename = fileName + '.json'
+    newPackagingMap.sqlitetablename = ''
+    newPackagingMap.tablestructure = []
+    newPackagingMap.tidy = {}
+    newPackagingMap.category = {}
+    let deviceInfo = {}
+    deviceInfo.id = ''
+    deviceInfo.device_name = ''
+    deviceInfo.device_manufacturer = ''
+    deviceInfo.device_mac = ''
+    deviceInfo.device_type = ''
+    deviceInfo.device_model = '' 
+    deviceInfo.query = ''
+    deviceInfo.location_lat = 0
+    deviceInfo.location_long = 0
+    deviceInfo.firmware = ''
+    deviceInfo.mobileapp = ''
+    newPackagingMap.device = deviceInfo
+    // need to match info to reference data types
+    newPackagingMap.apicolumns = {}
+    newPackagingMap.apicolHolder = {}
+    let packagingRef = this.liveComposer.liveComposer.packagingRefLive.packagingPrepare(newPackagingMap)
+    refBuilds.push(packagingRef.data)
+    // need to create question as blind  done via module?
+    let questionBlind = {}
+    questionBlind.forum = ''
+    questionBlind.text = fileName
+    refBuilds.push(questionBlind)
+    return refBuilds
+  }
+
+
+  /**
+  * prepare blind query for SafeFlow
+  * @method prepareSafeFlowStucture
+  *
+  */
+  prepareSafeFlowStucture = function (refContracts) {
+    console.log('start SF structure')
+    console.log(refContracts)
+    let tempRefConts = {}
+      /*
+    for (let refC of refContracts) {
+      // console.log('refstrcuture qestion')
+      // console.log(refC)
+      if (refC.value.refcontract === 'compute') {
+        // console.log('ref compute')
+        // console.log(refC)
+        tempRefConts.compute = refC
+      } else if (refC.value.refcontract === 'visualise') {
+        // console.log('ref vis')
+        // console.log(refC)
+        tempRefConts.visualise = refC
+      } else if(refC.value.refcontract === 'question') {
+        // console.log('question')
+        // console.log(refC)
+        tempRefConts.question = refC
+      } else if(refC.value.refcontract === 'packaging') {
+        // console.log('data')
+        // console.log(refC)
+        tempRefConts.data = refC
+      }
+    } */
+    tempRefConts.question = {}
+    tempRefConts.question.key = '123456789'
+    tempRefConts.question.value = { forum: '', text: 'blind' }
+    let holderData = {}
+    holderData.modules = modContracts
+    holderData.refcontracts = tempRefConts
+    let MCandRC = {}
+    MCandRC.action = 'tempmodule'
+    MCandRC.data = holderData
+    let tempMods = this.queryInputs(MCandRC)
+    console.log('HQB--safeflow ready query')
+    console.log(tempMods)
+    console.log(tempMods.data.exp.value)
   }
 
 }
