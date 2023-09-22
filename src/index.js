@@ -12,6 +12,8 @@ import { timeStamp } from 'console'
 */
 import EventEmitter from 'events'
 import LibComposer from 'librarycomposer'
+import util from 'util'
+// import { parentPort } from 'worker_threads'
 
 class HopQuerybuilder extends EventEmitter {
 
@@ -43,11 +45,10 @@ class HopQuerybuilder extends EventEmitter {
 
   /**
   * Prepare module contracts for different entry paths
-  * @method pathModules
+  * @method blindPath
   *
   */
   blindPath = function (beebeeIN, publicLib, fileInfo) {
-    console.log('HQB====start build blind to contracts')
     // Reduce Genesis Module Contracts for question, data, compute, visualisation
     let ModulesMinrequired = ['question', 'data', 'compute', 'visualise']
     let minStartlist = []
@@ -61,11 +62,9 @@ class HopQuerybuilder extends EventEmitter {
     let contractsPublic = this.splitMCfromRC(publicLib)
     // extract out observaation compute and charing ref contracts,  data more work required, need save data and then create new data packaging contract
     let extractedRefs = this.extractRefContractsPublicLib(contractsPublic.reference, fileInfo)
-    console.log('ref contract matched')
-    console.log(extractedRefs)
     // need to make refContract question and data packaging (for blind question input from beebee Done above)
     // next assume joined so provide finalised structure for SF-ECS
-    let tempRefContsSF = this.prepareSafeFlowStucture(extractedRefs)
+    let tempRefContsSF = this.prepareSafeFlowStucture(tempModContracts, extractedRefs, fileInfo)
     return tempRefContsSF
   }
 
@@ -143,14 +142,10 @@ class HopQuerybuilder extends EventEmitter {
     let peerModules = {}
     for (let mh of contracts.modules) {
       // prepare new modules for this peer  ledger
-      console.log('module Genesis')
-      console.log(mh)
       if (mh.value.info.moduleinfo.name === 'question') {
         peerModules.type = 'question'
         peerModules.question = mh.value.info.question
       } else if (mh.value.info.moduleinfo.name === 'data') {
-        console.log('datamatch')
-        console.log(mh.value.info)
         peerModules.type = 'data'
         peerModules.data = mh.value.info
       } else if (mh.value.info.moduleinfo.name === 'compute') {
@@ -176,44 +171,7 @@ class HopQuerybuilder extends EventEmitter {
       // aggregate all modules into exeriment contract
       // double check they are created
       let joinRefContract = this.liveComposer.liveComposer.experimentComposerJoin(moduleJoinedExpanded)
-      console.log('temp holding NXP Module Contract')
-      console.log(joinRefContract)
     }
-    // manually create Module Contracts
-    // question
-    // ref contract
-    /* let qRC = {}
-    qRC.forum = ''
-    qRC.text = 'Bitcoin 2017 price'
-    let questionMC = {}
-    questionMC.key = 'd0497a14581692e3e82c8f559e42e0a8231ca0e2'
-    questionMC.value = {}
-    questionMC.value.info = {}
-    questionMC.value.info.question = qRC
-    questionMC.value.info.type = 'question'
-    questionMC.value.refcontract = 'module'
-    questionMC.value.type = 'question'
-    moduleJoinedExpanded.push(questionMC)
-    // data packaging
-    let dataMC = {}
-    // ref contract to embedd
-    let dRC = {}
-    dRC.forum = ''
-    dRC.text = ''
-    dataMC.key = '82cd27bab9ac3ed4db3b7964a1f387ba0cb34a30'
-    dataMC.value = {}
-    dataMC.value.info = {}
-    dataMC.value.info.data = dRC
-    dataMC.value.info.type = 'data'
-    dataMC.value.refcontract = 'module'
-    dataMC.value.type = 'data'
-    moduleJoinedExpanded.push(dataMC)
-    // compute
-    let comuputeMC = {}
-    moduleJoinedExpanded.push(computeMC)
-    // visualise
-    let visMC = {}
-    moduleJoinedExpanded.push(visMC) */
     return moduleJoinedExpanded
   }
 
@@ -449,7 +407,7 @@ class HopQuerybuilder extends EventEmitter {
     let questionBlind = {}
     questionBlind.forum = ''
     questionBlind.text = fileName
-    refBuilds.push(questionBlind)
+    // refBuilds.push(questionBlind)
     return refBuilds
   }
 
@@ -459,45 +417,103 @@ class HopQuerybuilder extends EventEmitter {
   * @method prepareSafeFlowStucture
   *
   */
-  prepareSafeFlowStucture = function (refContracts) {
-    console.log('start SF structure')
-    console.log(refContracts)
-    let tempRefConts = {}
-      /*
-    for (let refC of refContracts) {
+  prepareSafeFlowStucture = function (moduleContracts, refContracts, fileInfo) {
+    console.log(util.inspect(refContracts, {showHidden: false, depth: null}))
+    let safeFlowQuery = {}
+    let modContracts = []
+    let modKeys = []
+    // form a joined contract, pass in module key only
+    let formExpmoduleContract = this.liveComposer.liveComposer.experimentComposerJoin(modKeys)
+    safeFlowQuery.exp = {}
+    safeFlowQuery.exp.key = formExpmoduleContract.data.hash
+    safeFlowQuery.exp.value = formExpmoduleContract.data.contract
+    // this needs to be save in Holepunch to update structure to keys
+    // next need to add reference Contracts to Module Contracts in correct format
+    let joinStructureMC = {}
+    joinStructureMC.key = ''
+    joinStructureMC.value = {info: {}, refcontract: 'module', type: 'data'}
+    // info structure
+    // let info = {}
+    // e.g. info.data = { key  value }  change data for name of contracts (is this good decision???)
+    // info.type = 'data
+    // need to form joined modle contract with expaneded to include reference contract
+    // structure needs to be modIn.type  modIn.data = temMC with refcontract embedded
+    for (let tmc of moduleContracts) {
+      let inputStructure = {}
       // console.log('refstrcuture qestion')
       // console.log(refC)
-      if (refC.value.refcontract === 'compute') {
-        // console.log('ref compute')
-        // console.log(refC)
-        tempRefConts.compute = refC
-      } else if (refC.value.refcontract === 'visualise') {
-        // console.log('ref vis')
-        // console.log(refC)
-        tempRefConts.visualise = refC
-      } else if(refC.value.refcontract === 'question') {
-        // console.log('question')
-        // console.log(refC)
-        tempRefConts.question = refC
-      } else if(refC.value.refcontract === 'packaging') {
-        // console.log('data')
-        // console.log(refC)
-        tempRefConts.data = refC
+      if(tmc.name === 'question') {
+        inputStructure.type = 'question'
+        let dataMCRC = {}
+        dataMCRC.question = { forum: '', text: fileInfo }
+        inputStructure.type = 'question'
+        inputStructure.data = dataMCRC
+       } else if(tmc.name === 'data') {
+          let dataMCRC = {}
+          let extractRC = refContracts.filter(e => e.value.refcontract === 'packaging')
+          dataMCRC = extractRC[0] // data packaging contract
+          inputStructure.type = 'data'
+          inputStructure.data = dataMCRC
+      } else if (tmc.name === 'compute') {
+        let dataMCRC = {}
+        let extractRC = refContracts.filter(e => e.value.refcontract === 'compute')
+        dataMCRC.compute = extractRC  // compute ref. contract plus setttings controls
+        // add settings and controls default
+        let controls = { date: 0, rangedate: [ 0 ] }
+        let settings = {
+          devices: [],
+          data: null,
+          compute: '',
+          visualise: '',
+          category: [ 'none' ],
+          timeperiod: '',
+          xaxis: '',
+          yaxis: [ 'blind1234555554321' ],
+          resolution: '',
+          setTimeFormat: ''
+        }
+        dataMCRC.controls = controls
+        dataMCRC.settings = settings
+        inputStructure = dataMCRC
+        inputStructure.type = 'compute'
+      } else if (tmc.name === 'visualise') {
+        let dataMCRC = {}
+        let extractRC = refContracts.filter(e => e.value.refcontract === 'visualise')
+        dataMCRC.visualise = extractRC // vis ref contract
+        // add default settings
+        let settings = {
+          devices: [],
+          data: null,
+          compute: '',
+          visualise: '',
+          category: [ 'none' ],
+          timeperiod: '',
+          xaxis: '',
+          yaxis: [ 'blind1234555554321' ],
+          resolution: '',
+          setTimeFormat: '',
+          single: true,
+          multidata: false
+        }
+        dataMCRC.settings = settings
+        inputStructure = dataMCRC
+        inputStructure.type = 'visualise'
       }
-    } */
-    tempRefConts.question = {}
-    tempRefConts.question.key = '123456789'
-    tempRefConts.question.value = { forum: '', text: 'blind' }
-    let holderData = {}
-    holderData.modules = modContracts
-    holderData.refcontracts = tempRefConts
-    let MCandRC = {}
-    MCandRC.action = 'tempmodule'
-    MCandRC.data = holderData
-    let tempMods = this.queryInputs(MCandRC)
-    console.log('HQB--safeflow ready query')
-    console.log(tempMods)
-    console.log(tempMods.data.exp.value)
+      const prepareModule = this.liveComposer.liveComposer.moduleComposer(inputStructure, 'join')
+      // need to format key value from hash and contract format
+      let keyStructure = {}
+      keyStructure.key = prepareModule.data.hash
+      keyStructure.value = prepareModule.data.contract
+      modContracts.push(keyStructure)
+    }
+    for (let modC of modContracts) {
+      modKeys.push(modC.key)
+    }
+    // SafeFow Structure
+    safeFlowQuery.modules = modContracts
+    safeFlowQuery.reftype = 'ignore'
+    safeFlowQuery.type = 'safeflow'
+    return safeFlowQuery
   }
 
 }
