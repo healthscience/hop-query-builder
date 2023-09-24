@@ -49,6 +49,7 @@ class HopQuerybuilder extends EventEmitter {
   *
   */
   blindPath = function (beebeeIN, publicLib, fileInfo) {
+    console.log('blind path')
     // Reduce Genesis Module Contracts for question, data, compute, visualisation
     let ModulesMinrequired = ['question', 'data', 'compute', 'visualise']
     let minStartlist = []
@@ -93,7 +94,7 @@ class HopQuerybuilder extends EventEmitter {
       ECSbundle.exp.value.refcontract = "experiment"
       ECSbundle.exp.value.computational = {}
       ECSbundle.exp.value.concept = { state: 'joined' }
-      ECSbundle.exp.value.modules = moduleList // ['a0b4dca6b4d141868f82b73fbabd23cbd880c588', '47a7292b0115fc1f35f3d3da6342ab19abbd14b4', '6b1847cbff292f5b85fbb02d7b52a1474e7c57b1', '123456789']
+      ECSbundle.exp.value.modules = moduleList
       ECSbundle.exp.value.space = { concept: 'mind' }
       // the modules expanded in an array
       ECSbundle.modules = prepareJoinStrucutre
@@ -336,6 +337,7 @@ class HopQuerybuilder extends EventEmitter {
   *
   */
   splitMCfromRC = function (publicLib) {
+    console.log('start splite')
     // split into Module Contracts and Reference Contracts
     let modContracts = []
     let refContracts = []
@@ -349,6 +351,12 @@ class HopQuerybuilder extends EventEmitter {
     let contractList = {}
     contractList.modules = modContracts
     contractList.reference = refContracts
+    /* for (let ref of refContracts) {
+      if (ref.value.refcontract === 'datatype') {
+        console.log('split')
+        console.log(ref)
+      }
+    } */
     return contractList
   }
 
@@ -386,11 +394,11 @@ class HopQuerybuilder extends EventEmitter {
     newPackagingMap.tidy = {}
     newPackagingMap.category = {}
     let deviceInfo = {}
-    deviceInfo.id = ''
-    deviceInfo.device_name = ''
+    deviceInfo.id = fileName
+    deviceInfo.device_name = fileName
     deviceInfo.device_manufacturer = ''
-    deviceInfo.device_mac = ''
-    deviceInfo.device_type = ''
+    deviceInfo.device_mac = fileName
+    deviceInfo.device_type = 'blind'
     deviceInfo.device_model = '' 
     deviceInfo.query = ''
     deviceInfo.location_lat = 0
@@ -418,7 +426,8 @@ class HopQuerybuilder extends EventEmitter {
   *
   */
   prepareSafeFlowStucture = function (moduleContracts, refContracts, fileInfo) {
-    console.log(util.inspect(refContracts, {showHidden: false, depth: null}))
+    // console.log('HQB--prepareSafeFlowStucture')
+    // console.log(util.inspect(refContracts, {showHidden: false, depth: null}))
     let safeFlowQuery = {}
     let modContracts = []
     let modKeys = []
@@ -459,7 +468,10 @@ class HopQuerybuilder extends EventEmitter {
         let extractRC = refContracts.filter(e => e.value.refcontract === 'compute')
         dataMCRC.compute = extractRC  // compute ref. contract plus setttings controls
         // add settings and controls default
-        let controls = { date: 0, rangedate: [ 0 ] }
+        // set time to current in ms
+        let currentQtime = new Date()
+        const blindDate = currentQtime.getTime()
+        let controls = { date: blindDate, rangedate: [ blindDate ] }
         let settings = {
           devices: [],
           data: null,
@@ -479,7 +491,7 @@ class HopQuerybuilder extends EventEmitter {
       } else if (tmc.name === 'visualise') {
         let dataMCRC = {}
         let extractRC = refContracts.filter(e => e.value.refcontract === 'visualise')
-        dataMCRC.visualise = extractRC // vis ref contract
+        dataMCRC.visualise = extractRC[0] // vis ref contract
         // add default settings
         let settings = {
           devices: [],
@@ -509,6 +521,7 @@ class HopQuerybuilder extends EventEmitter {
     for (let modC of modContracts) {
       modKeys.push(modC.key)
     }
+    // console.log(util.inspect(modContracts, {showHidden: false, depth: null}))
     // SafeFow Structure
     safeFlowQuery.modules = modContracts
     safeFlowQuery.reftype = 'ignore'
