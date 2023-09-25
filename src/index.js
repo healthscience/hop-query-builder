@@ -337,7 +337,6 @@ class HopQuerybuilder extends EventEmitter {
   *
   */
   splitMCfromRC = function (publicLib) {
-    console.log('start splite')
     // split into Module Contracts and Reference Contracts
     let modContracts = []
     let refContracts = []
