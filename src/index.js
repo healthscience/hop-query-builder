@@ -30,7 +30,7 @@ class HopQuerybuilder extends EventEmitter {
   *
   */
   queryPath = function (beebeeIN, publicLib, fileInfo) {
-    console.log('HQB---wich path for Module Contracts to follow')
+    console.log('HQB---which path for Module Contracts to follow')
     // console.log(this.modulesStart)
     // console.log(beebeeIN)
     // console.log(publicLib)
@@ -65,7 +65,7 @@ class HopQuerybuilder extends EventEmitter {
     let extractedRefs = this.extractRefContractsPublicLib(contractsPublic.reference, fileInfo)
     // need to make refContract question and data packaging (for blind question input from beebee Done above)
     // next assume joined so provide finalised structure for SF-ECS
-    let tempRefContsSF = this.prepareSafeFlowStucture(tempModContracts, extractedRefs, fileInfo)
+    let tempRefContsSF = this.prepareSafeFlowStucture(tempModContracts, extractedRefs, fileInfo, beebeeIN)
     return tempRefContsSF
   }
 
@@ -424,12 +424,16 @@ class HopQuerybuilder extends EventEmitter {
   * @method prepareSafeFlowStucture
   *
   */
-  prepareSafeFlowStucture = function (moduleContracts, refContracts, fileInfo) {
+  prepareSafeFlowStucture = function (moduleContracts, refContracts, fileInfo, LLMdata) {
     // console.log('HQB--prepareSafeFlowStucture')
     // console.log(util.inspect(refContracts, {showHidden: false, depth: null}))
     let safeFlowQuery = {}
     let modContracts = []
     let modKeys = []
+    console.log('LLM in')
+    console.log(LLMdata)
+    // which settings from LLM?
+    let visStyle = LLMdata.data.data.visstyle[0].vis
     // form a joined contract, pass in module key only
     let formExpmoduleContract = this.liveComposer.liveComposer.experimentComposerJoin(modKeys)
     safeFlowQuery.exp = {}
@@ -475,7 +479,7 @@ class HopQuerybuilder extends EventEmitter {
           devices: [],
           data: null,
           compute: '',
-          visualise: '',
+          visualise: visStyle,
           category: [ 'none' ],
           timeperiod: '',
           xaxis: '',
@@ -496,7 +500,7 @@ class HopQuerybuilder extends EventEmitter {
           devices: [],
           data: null,
           compute: '',
-          visualise: '',
+          visualise: visStyle,
           category: [ 'none' ],
           timeperiod: '',
           xaxis: '',
