@@ -39,6 +39,9 @@ class HopQuerybuilder extends EventEmitter {
       formSFquery = this.blindPath(beebeeIN, publicLib, fileInfo)
     } else if (beebeeIN.action === 'library') {
       formSFquery = this.libraryPath()
+    } else if (beebeeIN.action === 'future') {
+      console.log('HQB---future---path')
+      formSFquery = this.futurePath(beebeeIN, publicLib, fileInfo)
     }
     return formSFquery
   }
@@ -50,13 +53,7 @@ class HopQuerybuilder extends EventEmitter {
   */
   blindPath = function (beebeeIN, publicLib, fileInfo) {
     console.log('blind path')
-    // Reduce Genesis Module Contracts for question, data, compute, visualisation
-    let ModulesMinrequired = ['question', 'data', 'compute', 'visualise']
-    let minStartlist = []
-    for (const mtype of ModulesMinrequired) {
-      let match = this.modulesStart.data.filter(e => e.type === mtype)
-      minStartlist.push(match[0])
-    }
+    let minStartlist = this.minModulesetup()
     // take the genesis and make new instances of the Module Contracts i.e. unique keys
     let tempModContracts = this.tempModuleContractsCreate(minStartlist)
     // extract data, compute and visualisation ref contracts
@@ -67,6 +64,32 @@ class HopQuerybuilder extends EventEmitter {
     // next assume joined so provide finalised structure for SF-ECS
     let tempRefContsSF = this.prepareSafeFlowStucture(tempModContracts, extractedRefs, fileInfo, beebeeIN)
     return tempRefContsSF
+  }
+
+  /**
+  * future model prediction query
+  * @method futurePath
+  *
+  */
+  futurePath = function (beebeeIN, publicLib, fileInfo) {
+    console.log('future')
+    let futureQuery = {}
+    return futureQuery
+  }
+
+  /**
+  * four min modules required to start NXP with
+  * @method minModulesetup
+  *
+  */
+  minModulesetup = function (beebeeIN, publicLib, fileInfo) {
+    let ModulesMinrequired = ['question', 'data', 'compute', 'visualise']
+    let minStartlist = []
+    for (const mtype of ModulesMinrequired) {
+      let match = this.modulesStart.data.filter(e => e.type === mtype)
+      minStartlist.push(match[0])
+    }
+    return minStartlist
   }
 
   /**
