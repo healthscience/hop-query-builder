@@ -19,7 +19,6 @@ class HopQuerybuilder extends EventEmitter {
 
   constructor() {
     super()
-    console.log('HQB--live')
     this.liveComposer = new LibComposer()
     this.modulesStart = this.modulesGenesis()
   }
@@ -30,7 +29,7 @@ class HopQuerybuilder extends EventEmitter {
   *
   */
   queryPath = function (beebeeIN, publicLib, fileInfo) {
-    console.log('HQB---which path for Module Contracts to follow')
+    // console.log('HQB---which path for Module Contracts to follow')
     // console.log(this.modulesStart)
     // console.log(beebeeIN)
     // console.log(publicLib)
@@ -40,7 +39,6 @@ class HopQuerybuilder extends EventEmitter {
     } else if (beebeeIN.action === 'library') {
       formSFquery = this.libraryPath()
     } else if (beebeeIN.action === 'future') {
-      console.log('HQB---future---path')
       formSFquery = this.futurePath(beebeeIN, publicLib, fileInfo)
     }
     return formSFquery
@@ -52,7 +50,6 @@ class HopQuerybuilder extends EventEmitter {
   *
   */
   blindPath = function (beebeeIN, publicLib, fileInfo) {
-    console.log('blind path')
     let minStartlist = this.minModulesetup()
     // take the genesis and make new instances of the Module Contracts i.e. unique keys
     let tempModContracts = this.tempModuleContractsCreate(minStartlist)
@@ -67,13 +64,88 @@ class HopQuerybuilder extends EventEmitter {
   }
 
   /**
+  * library query builder
+  * @method libraryPath
+  *
+  */
+  libraryPath = function (path, action, data) {
+    console.log('HQB--library path')
+    let libraryData = {}
+    libraryData.data = 'contracts'
+    libraryData.type = 'peerprivate'
+    const segmentedRefContracts = this.liveComposer.liveRefcontUtility.refcontractSperate(data)
+    libraryData.referenceContracts = segmentedRefContracts
+    // need to split for genesis and peer joined NXPs
+    const nxpSplit = this.liveComposer.liveRefcontUtility.experimentSplit(segmentedRefContracts.experiment)
+    libraryData.splitExperiments = nxpSplit
+    // look up modules for this experiments
+    libraryData.networkExpModules = this.liveComposer.liveRefcontUtility.expMatchModuleGenesis(libraryData.referenceContracts.module, nxpSplit.genesis)
+    libraryData.networkPeerExpModules = this.liveComposer.liveRefcontUtility.expMatchModuleJoined(libraryData.referenceContracts.module, nxpSplit.joined)
+    return libraryData
+  }
+
+  /**
   * future model prediction query
   * @method futurePath
   *
   */
   futurePath = function (beebeeIN, publicLib, fileInfo) {
+    // prepare SafeFlow  future query i.e. update type with compute contract updated
     console.log('future')
+    console.log(beebeeIN)
+    // console.log(publicLib)
+    console.log(fileInfo)
     let futureQuery = {}
+    // need to replace past compute reference contract with the future linear regression ref. contract.
+    let nxpKey = Object.keys(beebeeIN.data)
+    // extract the compute contract and make prediction model e.g. linear regression
+    let computeContract = {}
+    for (let mod of beebeeIN.data[nxpKey[0]].modules) {
+      if (mod.value.type === 'compute') {
+        computeContract = mod
+      }
+    }
+    let computeRefFuture = computeContract
+    let refContractfuture = computeContract.value.info.compute[0].value
+    let refCdetails = {}
+    refCdetails.name = 'linear-regression',
+    refCdetails.description = 'statistical prediction model',
+    refCdetails.primary = 'yes',
+    refCdetails.dtprefix = 'f-f491adb5f30b32f078d8dbc235b0e849265cca',
+    refCdetails.code = 'simple-statistics',
+    refCdetails.hash = 'gh-12121212112'
+    console.log('future compute ref cont')
+    console.log(refCdetails)
+    computeRefFuture.value.info.compute[0].value.computational = refCdetails
+    // update time range for future
+    let futureDate = new Date()
+    // Add five days to current date
+    futureDate.setDate(futureDate.getDate() + 30)
+    futureDate = futureDate.getTime()
+    console.log(futureDate)
+    let controls = { date: computeRefFuture.value.info.controls.date, rangedate: [ computeRefFuture.value.info.controls.date ], sourceTime: [ futureDate ] }
+    computeRefFuture.value.info.controls = controls
+    // prepare new compute reference contract
+    computeRefFuture.key = '2233344455566'
+    // computeRefFuture.value = computeRefFuture
+    // replace past compute contract with future
+    let updatedModules = []
+    for (let mod of beebeeIN.data[nxpKey[0]].modules) {
+      if (mod.value.type === 'compute') {
+        updatedModules.push(computeRefFuture)
+      } else {
+        updatedModules.push(mod)
+      }
+    }
+    let updateSF = {}
+    updateSF.input = 'future'
+    updateSF.exp = { key: nxpKey[0], value: {} }
+    updateSF.entityUUID = beebeeIN.data[nxpKey[0]].shellID
+    updateSF.modules = updatedModules
+    updateSF.update = 'predict-future'
+    futureQuery.exp = { key: nxpKey[0], value: {} }
+    futureQuery.update = updateSF
+    // futureQuery.modules = beebeeIN.data[nxpKey[0]].modules
     return futureQuery
   }
 
@@ -453,8 +525,8 @@ class HopQuerybuilder extends EventEmitter {
     let safeFlowQuery = {}
     let modContracts = []
     let modKeys = []
-    console.log('LLM in')
-    console.log(LLMdata)
+    // console.log('LLM in')
+    // console.log(LLMdata)
     // which settings from LLM?
     let visStyle = LLMdata.data.data.visstyle[0].vis
     // form a joined contract, pass in module key only
