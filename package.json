@@ -1,6 +1,6 @@
 {
   "name": "hop-query-builder",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "description": "utility library for HOP queries",
   "main": "src/index.js",
   "type": "module",
