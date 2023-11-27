@@ -1,5 +1,4 @@
 'use strict'
-import { timeStamp } from 'console'
 /**
 *  HOP query builder library
 *
@@ -13,7 +12,6 @@ import { timeStamp } from 'console'
 import EventEmitter from 'events'
 import LibComposer from 'librarycomposer'
 import util from 'util'
-// import { parentPort } from 'worker_threads'
 
 class HopQuerybuilder extends EventEmitter {
 
@@ -29,10 +27,6 @@ class HopQuerybuilder extends EventEmitter {
   *
   */
   queryPath = function (beebeeIN, publicLib, fileInfo) {
-    // console.log('HQB---which path for Module Contracts to follow')
-    // console.log(this.modulesStart)
-    // console.log(beebeeIN)
-    // console.log(publicLib)
     let formSFquery = {}
     if (beebeeIN.action === 'blind') {
       formSFquery = this.blindPath(beebeeIN, publicLib, fileInfo)
@@ -69,7 +63,6 @@ class HopQuerybuilder extends EventEmitter {
   *
   */
   libraryPath = function (path, action, data) {
-    console.log('HQB--library path')
     let libraryData = {}
     libraryData.data = 'contracts'
     libraryData.type = 'peerprivate'
@@ -91,10 +84,6 @@ class HopQuerybuilder extends EventEmitter {
   */
   futurePath = function (beebeeIN, publicLib, fileInfo) {
     // prepare SafeFlow  future query i.e. update type with compute contract updated
-    console.log('future')
-    console.log(beebeeIN)
-    // console.log(publicLib)
-    console.log(fileInfo)
     let futureQuery = {}
     // need to replace past compute reference contract with the future linear regression ref. contract.
     let nxpKey = Object.keys(beebeeIN.data)
@@ -114,15 +103,12 @@ class HopQuerybuilder extends EventEmitter {
     refCdetails.dtprefix = 'f-f491adb5f30b32f078d8dbc235b0e849265cca',
     refCdetails.code = 'simple-statistics',
     refCdetails.hash = 'gh-12121212112'
-    console.log('future compute ref cont')
-    console.log(refCdetails)
     computeRefFuture.value.info.compute[0].value.computational = refCdetails
     // update time range for future
     let futureDate = new Date()
     // Add five days to current date
     futureDate.setDate(futureDate.getDate() + 30)
     futureDate = futureDate.getTime()
-    console.log(futureDate)
     let controls = { date: computeRefFuture.value.info.controls.date, rangedate: [ computeRefFuture.value.info.controls.date ], sourceTime: [ futureDate ] }
     computeRefFuture.value.info.controls = controls
     // prepare new compute reference contract
@@ -170,10 +156,8 @@ class HopQuerybuilder extends EventEmitter {
   *
   */
   queryInputs = async function (contractBoth) {
-    console.log('HQB--Qinputs')
     let safeFlowquery = {}
     if (contractBoth.action === 'tempmodule') {
-      console.log('tempmodule---PATH')
       // create new temp JOIN modules from network
       let prepareJoinStrucutre = this.joinStructurePrep(contractBoth.data)
       // make list of Module Contract in array
@@ -198,7 +182,6 @@ class HopQuerybuilder extends EventEmitter {
       safeFlowquery.action = 'networkexperiment'
       safeFlowquery.data = ECSbundle
     } else if (query.action === 'genesis') {
-      console.log('HQB--geneiss start')
       let moduleGenesisList = []
       let moduleGenesisExpanded = []
       let newModCount = message.data.length
@@ -520,13 +503,10 @@ class HopQuerybuilder extends EventEmitter {
   *
   */
   prepareSafeFlowStucture = function (moduleContracts, refContracts, fileInfo, LLMdata) {
-    // console.log('HQB--prepareSafeFlowStucture')
     // console.log(util.inspect(refContracts, {showHidden: false, depth: null}))
     let safeFlowQuery = {}
     let modContracts = []
     let modKeys = []
-    // console.log('LLM in')
-    // console.log(LLMdata)
     // which settings from LLM?
     let visStyle = LLMdata.data.data.visstyle[0].vis
     // form a joined contract, pass in module key only
@@ -547,8 +527,6 @@ class HopQuerybuilder extends EventEmitter {
     // structure needs to be modIn.type  modIn.data = temMC with refcontract embedded
     for (let tmc of moduleContracts) {
       let inputStructure = {}
-      // console.log('refstrcuture qestion')
-      // console.log(refC)
       if(tmc.name === 'question') {
         inputStructure.type = 'question'
         let dataMCRC = {}
