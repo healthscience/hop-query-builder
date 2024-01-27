@@ -31,7 +31,7 @@ class HopQuerybuilder extends EventEmitter {
     if (beebeeIN.action === 'blind') {
       formSFquery = this.blindPath(beebeeIN, publicLib, fileInfo)
     } else if (beebeeIN.action === 'library') {
-      formSFquery = this.libraryPath()
+      formSFquery = this.libraryQuerypath()
     } else if (beebeeIN.action === 'future') {
       formSFquery = this.futurePath(beebeeIN, publicLib, fileInfo)
     }
@@ -50,7 +50,7 @@ class HopQuerybuilder extends EventEmitter {
     // extract data, compute and visualisation ref contracts
     let contractsPublic = this.splitMCfromRC(publicLib)
     // extract out observaation compute and charing ref contracts,  data more work required, need save data and then create new data packaging contract
-    let extractedRefs = this.extractRefContractsPublicLib(contractsPublic.reference, fileInfo)
+    let extractedRefs = this.extractBlindRefContractsPublicLib(contractsPublic.reference, fileInfo)
     // need to make refContract question and data packaging (for blind question input from beebee Done above)
     // next assume joined so provide finalised structure for SF-ECS
     let tempRefContsSF = this.prepareSafeFlowStucture(tempModContracts, extractedRefs, fileInfo, beebeeIN)
@@ -59,10 +59,10 @@ class HopQuerybuilder extends EventEmitter {
 
   /**
   * library query builder
-  * @method libraryPath
+  * @method libraryQuerypath
   *
   */
-  libraryPath = function (path, action, data) {
+  libraryQuerypath = function (path, action, data) {
     let libraryData = {}
     libraryData.data = 'contracts'
     libraryData.type = 'peerprivate'
@@ -439,10 +439,10 @@ class HopQuerybuilder extends EventEmitter {
 
   /**
   * Build blind reference contracts
-  * @method rextractRefContractsPublicLib
+  * @method extractBlindRefContractsPublicLib
   *
   */
-  extractRefContractsPublicLib = function (refContracts, fileName) {
+  extractBlindRefContractsPublicLib = function (refContracts, fileName) {
     let refBuilds = []
     for (let rc of refContracts) {
       if (rc.value.refcontract === 'compute' && rc.value.computational.name === 'observation') {
@@ -486,8 +486,11 @@ class HopQuerybuilder extends EventEmitter {
     // need to match info to reference data types
     newPackagingMap.apicolumns = {}
     newPackagingMap.apicolHolder = {}
-    let packagingRef = this.liveComposer.liveComposer.packagingRefLive.packagingPrepare(newPackagingMap)
-    refBuilds.push(packagingRef.data)
+    let packagingRef = this.liveComposer.liveComposer.packagingComposer(newPackagingMap)
+    let blindPackaginRC = {}
+    blindPackaginRC.key = packagingRef.data.hash
+    blindPackaginRC.value = packagingRef.data.contract
+    refBuilds.push(blindPackaginRC)
     // need to create question as blind  done via module?
     let questionBlind = {}
     questionBlind.forum = ''
@@ -503,6 +506,7 @@ class HopQuerybuilder extends EventEmitter {
   *
   */
   prepareSafeFlowStucture = function (moduleContracts, refContracts, fileInfo, LLMdata) {
+    // console.log('HQB-----safeflow')
     // console.log(util.inspect(refContracts, {showHidden: false, depth: null}))
     let safeFlowQuery = {}
     let modContracts = []
