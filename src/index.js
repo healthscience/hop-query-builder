@@ -44,9 +44,15 @@ class HopQuerybuilder extends EventEmitter {
   *
   */
   blindPath = function (beebeeIN, publicLib, fileInfo) {
+    console.log('blind input')
+    console.log(beebeeIN)
+    console.log(fileInfo)
+    console.log('------------------')
     let minStartlist = this.minModulesetup()
     // take the genesis and make new instances of the Module Contracts i.e. unique keys
-    let tempModContracts = this.tempModuleContractsCreate(minStartlist)
+    let tempModContracts = this.tempModuleContractsCreate(minStartlist, fileInfo)
+    console.log('temp modules')
+    console.log(tempModContracts)
     // extract data, compute and visualisation ref contracts
     let contractsPublic = this.splitMCfromRC(publicLib)
     // extract out observaation compute and charing ref contracts,  data more work required, need save data and then create new data packaging contract
@@ -393,11 +399,15 @@ class HopQuerybuilder extends EventEmitter {
   * @method tempModuleContractsCreate
   *
   */
-  tempModuleContractsCreate = function (gMods) { 
+  tempModuleContractsCreate = function (gMods, file) { 
     // create new temp modules for new experiment
     let modCount = 1
     let moduleHolder = []
     for (const mc of gMods) {
+      // make question unique
+      if (mc.type === 'question') {
+        mc.description = mc.description + file
+      }
       const prepareModule = this.liveComposer.liveComposer.moduleComposer(mc, '')
       let moduleContainer = {}
       moduleContainer.name = prepareModule.data.contract.concept.type
@@ -507,6 +517,9 @@ class HopQuerybuilder extends EventEmitter {
     let safeFlowQuery = {}
     let modContracts = []
     let modKeys = []
+    for (let mc of moduleContracts) {
+      modKeys.push(mc.refcont)
+    }
     // which settings from LLM?
     let visStyle = LLMdata.data.data.visstyle[0].vis
     // form a joined contract, pass in module key only
