@@ -44,18 +44,14 @@ class HopQuerybuilder extends EventEmitter {
   *
   */
   blindPath = function (beebeeIN, publicLib, fileInfo) {
-    console.log('blind input')
-    console.log(beebeeIN)
-    console.log(fileInfo)
-    console.log('------------------')
     let minStartlist = this.minModulesetup()
     // take the genesis and make new instances of the Module Contracts i.e. unique keys
     let tempModContracts = this.tempModuleContractsCreate(minStartlist, fileInfo)
-    console.log('temp modules')
-    console.log(tempModContracts)
+    // console.log('temp modules')
+    // console.log(tempModContracts)
     // extract data, compute and visualisation ref contracts
     let contractsPublic = this.splitMCfromRC(publicLib)
-    // extract out observaation compute and charing ref contracts,  data more work required, need save data and then create new data packaging contract
+    // extract out observaation compute and charting ref contracts,  data more work required, need save data and then create new data packaging contract
     let extractedRefs = this.extractRefContractsPublicLib(contractsPublic.reference, fileInfo)
     // need to make refContract question and data packaging (for blind question input from beebee Done above)
     // next assume joined so provide finalised structure for SF-ECS
@@ -429,7 +425,7 @@ class HopQuerybuilder extends EventEmitter {
     let modContracts = []
     let refContracts = []
     for (let pubLib of publicLib) {
-      if (pubLib?.value.refcontract === 'module') {
+      if (pubLib?.value?.refcontract === 'module') {
         modContracts.push(pubLib)
       } else {
         refContracts.push(pubLib)
@@ -455,9 +451,9 @@ class HopQuerybuilder extends EventEmitter {
   extractRefContractsPublicLib = function (refContracts, fileName) {
     let refBuilds = []
     for (let rc of refContracts) {
-      if (rc.value.refcontract === 'compute' && rc.value.computational.name === 'observation') {
+      if (rc?.value?.refcontract === 'compute' && rc?.value?.computational?.name === 'observation') {
         refBuilds.push(rc)
-      } else if (rc.value.refcontract === 'visualise' && rc.value.computational.name === 'chart.js library') {
+      } else if (rc?.value?.refcontract === 'visualise' && rc?.value?.computational?.name === 'chart.js library') {
         refBuilds.push(rc)
       }
       /* else if (rc.value.refcontract === 'packaging') {
@@ -505,7 +501,6 @@ class HopQuerybuilder extends EventEmitter {
     // refBuilds.push(questionBlind)
     return refBuilds
   }
-
 
   /**
   * prepare blind query for SafeFlow
