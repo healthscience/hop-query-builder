@@ -17,7 +17,7 @@ class HopQuerybuilder extends EventEmitter {
 
   constructor() {
     super()
-    this.liveComposer = new LibComposer()
+    this.libComposer = new LibComposer()
     this.modulesStart = this.modulesGenesis()
   }
 
@@ -44,11 +44,10 @@ class HopQuerybuilder extends EventEmitter {
   *
   */
   blindPath = function (beebeeIN, publicLib, fileInfo) {
+    // console.log(util.inspect(publicLib, {showHidden: false, depth: null}))
     let minStartlist = this.minModulesetup()
     // take the genesis and make new instances of the Module Contracts i.e. unique keys
     let tempModContracts = this.tempModuleContractsCreate(minStartlist, fileInfo)
-    // console.log('temp modules')
-    // console.log(tempModContracts)
     // extract data, compute and visualisation ref contracts
     let contractsPublic = this.splitMCfromRC(publicLib)
     // extract out observaation compute and charting ref contracts,  data more work required, need save data and then create new data packaging contract
@@ -68,14 +67,14 @@ class HopQuerybuilder extends EventEmitter {
     let libraryData = {}
     libraryData.data = 'contracts'
     libraryData.type = 'peerprivate'
-    const segmentedRefContracts = this.liveComposer.liveRefcontUtility.refcontractSperate(data)
+    const segmentedRefContracts = this.libComposer.liveRefcontUtility.refcontractSperate(data)
     libraryData.referenceContracts = segmentedRefContracts
     // need to split for genesis and peer joined NXPs
-    const nxpSplit = this.liveComposer.liveRefcontUtility.experimentSplit(segmentedRefContracts.experiment)
+    const nxpSplit = this.libComposer.liveRefcontUtility.experimentSplit(segmentedRefContracts.experiment)
     libraryData.splitExperiments = nxpSplit
     // look up modules for this experiments
-    libraryData.networkExpModules = this.liveComposer.liveRefcontUtility.expMatchModuleGenesis(libraryData.referenceContracts.module, nxpSplit.genesis)
-    libraryData.networkPeerExpModules = this.liveComposer.liveRefcontUtility.expMatchModuleJoined(libraryData.referenceContracts.module, nxpSplit.joined)
+    libraryData.networkExpModules = this.libComposer.liveRefcontUtility.expMatchModuleGenesis(libraryData.referenceContracts.module, nxpSplit.genesis)
+    libraryData.networkPeerExpModules = this.libComposer.liveRefcontUtility.expMatchModuleJoined(libraryData.referenceContracts.module, nxpSplit.joined)
     return libraryData
   }
 
@@ -92,12 +91,12 @@ class HopQuerybuilder extends EventEmitter {
     // extract the compute contract and make prediction model e.g. linear regression
     let computeContract = {}
     for (let mod of beebeeIN.data[nxpKey[0]].modules) {
-      if (mod.value.type === 'compute') {
+      if (mod.value.style === 'compute') {
         computeContract = mod
       }
     }
     let computeRefFuture = computeContract
-    let refContractfuture = computeContract.value.info.compute[0].value
+    //  let refContractfuture = computeContract.value.info.compute[0].value
     let refCdetails = {}
     refCdetails.name = 'linear-regression',
     refCdetails.description = 'statistical prediction model',
@@ -143,10 +142,10 @@ class HopQuerybuilder extends EventEmitter {
   *
   */
   minModulesetup = function (beebeeIN, publicLib, fileInfo) {
-    let ModulesMinrequired = ['question', 'data', 'compute', 'visualise']
+    let ModulesMinrequired = ['question', 'packaging', 'compute', 'visualise']
     let minStartlist = []
     for (const mtype of ModulesMinrequired) {
-      let match = this.modulesStart.data.filter(e => e.type === mtype)
+      let match = this.modulesStart.data.filter(e => e.style === mtype)
       minStartlist.push(match[0])
     }
     return minStartlist
@@ -201,7 +200,7 @@ class HopQuerybuilder extends EventEmitter {
       }
       if (newModCount === 0) {
         // aggregate all modules into exeriment contract
-        let genesisRefContract = this.liveComposer.experimentComposerGenesis(moduleGenesisList)
+        let genesisRefContract = this.libComposer.experimentComposerGenesis(moduleGenesisList)
         // double check they are created
         const savedFeedback = await this.liveHolepunch.BeeData.savePubliclibrary(genesisRefContract)
         savedFeedback.expanded = moduleGenesisExpanded
@@ -224,9 +223,8 @@ class HopQuerybuilder extends EventEmitter {
     for (let mh of contracts.modules) {
       // prepare new modules for this peer  ledger
       if (mh.value.info.moduleinfo.name === 'question') {
-        peerModules.type = 'question'
         peerModules.question = mh.value.info.question
-      } else if (mh.value.info.moduleinfo.name === 'data') {
+      } else if (mh.value.info.moduleinfo.name === 'packaging') {
         peerModules.type = 'data'
         peerModules.data = mh.value.info
       } else if (mh.value.info.moduleinfo.name === 'compute') {
@@ -239,7 +237,7 @@ class HopQuerybuilder extends EventEmitter {
         peerModules.visualise = mh.value.info.refcont
         peerModules.settings = mh.value.info.option // mh.data.options.visualise
       }
-      let moduleRefContract = this.liveComposer.liveComposer.moduleComposer(peerModules, 'join')
+      let moduleRefContract = this.libComposer.liveComposer.moduleComposer(peerModules, 'join')
       // key value structure
       let modFormat = {}
       modFormat.key = moduleRefContract.data.hash
@@ -251,7 +249,7 @@ class HopQuerybuilder extends EventEmitter {
     if (newModCount === 0) {
       // aggregate all modules into exeriment contract
       // double check they are created
-      let joinRefContract = this.liveComposer.liveComposer.experimentComposerJoin(moduleJoinedExpanded)
+      let joinRefContract = this.libComposer.liveComposer.experimentComposerJoin(moduleJoinedExpanded)
     }
     return moduleJoinedExpanded
   }
@@ -266,7 +264,7 @@ class HopQuerybuilder extends EventEmitter {
     const dataCNRLbundle = {}
     // CNRL implementation contract e.g. from mobile phone sqlite table structure
     dataCNRLbundle.reftype = 'module'
-    dataCNRLbundle.type = 'question'
+    dataCNRLbundle.style = 'question'
     dataCNRLbundle.primary = 'genesis'
     dataCNRLbundle.description = 'Question for network experiment'
     dataCNRLbundle.concept = ''
@@ -275,7 +273,7 @@ class HopQuerybuilder extends EventEmitter {
     // CNRL implementation contract e.g. from mobile phone sqlite table structure
     const dataCNRLbundle2 = {}
     dataCNRLbundle2.reftype = 'module'
-    dataCNRLbundle2.type = 'data'
+    dataCNRLbundle2.style = 'packaging'
     dataCNRLbundle2.primary = 'genesis'
     dataCNRLbundle2.description = 'data source(s) for network experiment'
     dataCNRLbundle2.grid = []
@@ -283,7 +281,7 @@ class HopQuerybuilder extends EventEmitter {
     // CNRL implementation contract e.g. from mobile phone sqlite table structure
     /* const dataCNRLbundle3 = {}
     dataCNRLbundle3.reftype = 'module'
-    dataCNRLbundle3.type = 'device'
+    dataCNRLbundle3.style = 'device'
     dataCNRLbundle3.primary = 'genesis'
     dataCNRLbundle3.concept = ''
     dataCNRLbundle3.grid = []
@@ -291,7 +289,7 @@ class HopQuerybuilder extends EventEmitter {
     // CNRL implementation contract e.g. from mobile phone sqlite table structure
     /* const dataCNRLbundle4 = {}
     dataCNRLbundle4.reftype = 'module'
-    dataCNRLbundle4.type = 'mobile'
+    dataCNRLbundle4.style = 'mobile'
     dataCNRLbundle4.primary = 'genesis'
     dataCNRLbundle4.concept = ''
     dataCNRLbundle4.grid = []
@@ -299,7 +297,7 @@ class HopQuerybuilder extends EventEmitter {
     // module ref contract utility type
     const dataCNRLbundle6 = {}
     dataCNRLbundle6.reftype = 'module'
-    dataCNRLbundle6.type = 'compute'
+    dataCNRLbundle6.style = 'compute'
     dataCNRLbundle6.primary = 'genesis'
     dataCNRLbundle6.concept = ''
     dataCNRLbundle6.grid = []
@@ -314,49 +312,49 @@ class HopQuerybuilder extends EventEmitter {
     // CNRL implementation contract e.g. from mobile phone sqlite table structure
     const dataCNRLbundle5 = {}
     dataCNRLbundle5.reftype = 'module'
-    dataCNRLbundle5.type = 'visualise'
+    dataCNRLbundle5.style = 'visualise'
     dataCNRLbundle5.primary = 'genesis'
     dataCNRLbundle5.grid = []
     moduleContracts.push(dataCNRLbundle5)
     // CNRL implementation contract e.g. from mobile phone sqlite table structure
     const dataCNRLbundle7 = {}
     dataCNRLbundle7.reftype = 'module'
-    dataCNRLbundle7.type = 'education'
+    dataCNRLbundle7.style = 'education'
     dataCNRLbundle7.primary = 'genesis'
     dataCNRLbundle7.concept = ''
     dataCNRLbundle7.grid = []
     moduleContracts.push(dataCNRLbundle7)
     /* const dataCNRLbundle8 = {}
     dataCNRLbundle8.reftype = 'module'
-    dataCNRLbundle8.type = 'lifestyle'
+    dataCNRLbundle8.style = 'lifestyle'
     dataCNRLbundle8.primary = 'genesis'
     dataCNRLbundle8.concet = ''
     dataCNRLbundle8.grid = []
     moduleContracts.push(dataCNRLbundle8) */
     /* const dataCNRLbundle9 = {}
     dataCNRLbundle9.reftype = 'module'
-    dataCNRLbundle9.type = 'error'
+    dataCNRLbundle9.style = 'error'
     dataCNRLbundle9.primary = 'genesis'
     dataCNRLbundle9.concept = ''
     dataCNRLbundle9.grid = []
     moduleContracts.push(dataCNRLbundle9) */
     /* const dataCNRLbundle10 = {}
     dataCNRLbundle10.reftype = 'module'
-    dataCNRLbundle10.type = 'control'
+    dataCNRLbundle10.style = 'control'
     dataCNRLbundle10.primary = 'genesis'
     dataCNRLbundle10.concept = ''
     dataCNRLbundle10.grid = []
     moduleContracts.push(dataCNRLbundle10) */
     const dataCNRLbundle11 = {}
     dataCNRLbundle11.reftype = 'module'
-    dataCNRLbundle11.type = 'prescription'
+    dataCNRLbundle11.style = 'prescription'
     dataCNRLbundle11.primary = 'genesis'
     dataCNRLbundle11.concept = ''
     dataCNRLbundle11.grid = []
     moduleContracts.push(dataCNRLbundle11)
     /* const dataCNRLbundle12 = {}
     dataCNRLbundle12.reftype = 'module'
-    dataCNRLbundle12.type = 'communication'
+    dataCNRLbundle12.style = 'communication'
     dataCNRLbundle12.primary = 'genesis'
     dataCNRLbundle12.concept = ''
     dataCNRLbundle12.grid = []
@@ -364,21 +362,21 @@ class HopQuerybuilder extends EventEmitter {
     // CNRL implementation contract e.g. from mobile phone sqlite table structure
     /* const dataCNRLbundle13 = {}
     dataCNRLbundle13.reftype = 'module'
-    dataCNRLbundle13.type = 'idea'
+    dataCNRLbundle13.style = 'idea'
     dataCNRLbundle13.primary = 'genesis'
     dataCNRLbundle13.concept = ''
     dataCNRLbundle13.grid = []
     moduleContracts.push(dataCNRLbundle13) */
     const dataCNRLbundle14 = {}
     dataCNRLbundle14.reftype = 'module'
-    dataCNRLbundle14.type = 'rhino'
+    dataCNRLbundle14.style = 'rhino'
     dataCNRLbundle14.primary = 'genesis'
     dataCNRLbundle14.concept = ''
     dataCNRLbundle14.grid = []
     moduleContracts.push(dataCNRLbundle14)
     const dataCNRLbundle15 = {}
     dataCNRLbundle15.reftype = 'module'
-    dataCNRLbundle15.type = 'pricing'
+    dataCNRLbundle15.style = 'pricing'
     dataCNRLbundle15.primary = 'genesis'
     dataCNRLbundle15.concept = ''
     dataCNRLbundle15.grid = []
@@ -395,18 +393,20 @@ class HopQuerybuilder extends EventEmitter {
   * @method tempModuleContractsCreate
   *
   */
-  tempModuleContractsCreate = function (gMods, file) { 
+  tempModuleContractsCreate = function (gMods, file) {
+
     // create new temp modules for new experiment
     let modCount = 1
     let moduleHolder = []
     for (const mc of gMods) {
       // make question unique
-      if (mc.type === 'question') {
+      if (mc.style === 'question') {
         mc.description = mc.description + file
       }
-      const prepareModule = this.liveComposer.liveComposer.moduleComposer(mc, '')
+      mc.value = mc.style
+      const prepareModule = this.libComposer.liveComposer.moduleComposer(mc, '')
       let moduleContainer = {}
-      moduleContainer.name = prepareModule.data.contract.concept.type
+      moduleContainer.name = prepareModule.data.contract.style
       moduleContainer.id = modCount
       moduleContainer.refcont = prepareModule.data.hash
       moduleHolder.push(moduleContainer)
@@ -453,7 +453,7 @@ class HopQuerybuilder extends EventEmitter {
     for (let rc of refContracts) {
       if (rc?.value?.refcontract === 'compute' && rc?.value?.computational?.name === 'observation') {
         refBuilds.push(rc)
-      } else if (rc?.value?.refcontract === 'visualise' && rc?.value?.computational?.name === 'chart.js library') {
+      } else if (rc?.value?.refcontract === 'visualise' || rc?.value?.computational?.name === 'chart.js library') {
         refBuilds.push(rc)
       }
       /* else if (rc.value.refcontract === 'packaging') {
@@ -492,13 +492,16 @@ class HopQuerybuilder extends EventEmitter {
     // need to match info to reference data types
     newPackagingMap.apicolumns = {}
     newPackagingMap.apicolHolder = {}
-    let packagingRef = this.liveComposer.liveComposer.packagingRefLive.packagingPrepare(newPackagingMap)
-    refBuilds.push(packagingRef.data)
+    let packagingRef = this.libComposer.liveComposer.packagingRefLive.packagingPrepare(newPackagingMap)
+    const dtHASH = this.libComposer.liveComposer.cryptoLive.evidenceProof(packagingRef)
+    let contractData = {}
+    contractData.key = dtHASH
+    contractData.value = packagingRef
+    refBuilds.push(contractData)
     // need to create question as blind  done via module?
     let questionBlind = {}
     questionBlind.forum = ''
     questionBlind.text = fileName
-    // refBuilds.push(questionBlind)
     return refBuilds
   }
 
@@ -508,6 +511,8 @@ class HopQuerybuilder extends EventEmitter {
   *
   */
   prepareSafeFlowStucture = function (moduleContracts, refContracts, fileInfo, LLMdata) {
+    console.log('HQB--safelfow stcuture build')
+    console.log(util.inspect(refContracts, {showHidden: false, depth: null}))
     // console.log(util.inspect(refContracts, {showHidden: false, depth: null}))
     let safeFlowQuery = {}
     let modContracts = []
@@ -518,7 +523,7 @@ class HopQuerybuilder extends EventEmitter {
     // which settings from LLM?
     let visStyle = LLMdata.data.data.visstyle[0].vis
     // form a joined contract, pass in module key only
-    let formExpmoduleContract = this.liveComposer.liveComposer.experimentComposerJoin(modKeys)
+    let formExpmoduleContract = this.libComposer.liveComposer.experimentComposerJoin(modKeys)
     safeFlowQuery.exp = {}
     safeFlowQuery.exp.key = formExpmoduleContract.data.hash
     safeFlowQuery.exp.value = formExpmoduleContract.data.contract
@@ -526,7 +531,7 @@ class HopQuerybuilder extends EventEmitter {
     // next need to add reference Contracts to Module Contracts in correct format
     let joinStructureMC = {}
     joinStructureMC.key = ''
-    joinStructureMC.value = {info: {}, refcontract: 'module', type: 'data'}
+    joinStructureMC.value = {info: {}, refcontract: 'module', style: 'packaging'}
     // info structure
     // let info = {}
     // e.g. info.data = { key  value }  change data for name of contracts (is this good decision???)
@@ -536,20 +541,25 @@ class HopQuerybuilder extends EventEmitter {
     for (let tmc of moduleContracts) {
       let inputStructure = {}
       if(tmc.name === 'question') {
-        inputStructure.type = 'question'
+        inputStructure.style = 'question'
         let dataMCRC = {}
         dataMCRC.question = { forum: '', text: fileInfo }
-        inputStructure.type = 'question'
-        inputStructure.data = dataMCRC
-       } else if(tmc.name === 'data') {
+        inputStructure.value = {}
+        inputStructure.value.style = 'question'
+        inputStructure.value.info = dataMCRC
+       } else if(tmc.name === 'packaging') {
           let dataMCRC = {}
           let extractRC = refContracts.filter(e => e.value.refcontract === 'packaging')
           dataMCRC = extractRC[0] // data packaging contract
-          inputStructure.type = 'data'
-          inputStructure.data = dataMCRC
+          inputStructure.style = 'packaging'
+          inputStructure.value = {}
+          inputStructure.value.style = 'packaging'
+          inputStructure.value.info = dataMCRC
       } else if (tmc.name === 'compute') {
         let dataMCRC = {}
         let extractRC = refContracts.filter(e => e.value.refcontract === 'compute')
+        console.log('HQB--blind path')
+        console.log(extractRC)
         dataMCRC.compute = extractRC  // compute ref. contract plus setttings controls
         // add settings and controls default
         // set time to current in ms
@@ -570,8 +580,12 @@ class HopQuerybuilder extends EventEmitter {
         }
         dataMCRC.controls = controls
         dataMCRC.settings = settings
-        inputStructure = dataMCRC
-        inputStructure.type = 'compute'
+        inputStructure.style = 'compute'
+        inputStructure.value = {}
+        inputStructure.value.style = 'compute'
+        inputStructure.value.info = dataMCRC
+        console.log('final sturcuture compute')
+        console.log(inputStructure)
       } else if (tmc.name === 'visualise') {
         let dataMCRC = {}
         let extractRC = refContracts.filter(e => e.value.refcontract === 'visualise')
@@ -592,10 +606,12 @@ class HopQuerybuilder extends EventEmitter {
           multidata: false
         }
         dataMCRC.settings = settings
-        inputStructure = dataMCRC
-        inputStructure.type = 'visualise'
+        inputStructure.style = 'visualise'
+        inputStructure.value = {}
+        inputStructure.value.style = 'visualise'
+        inputStructure.value.info = dataMCRC
       }
-      const prepareModule = this.liveComposer.liveComposer.moduleComposer(inputStructure, 'join')
+      const prepareModule = this.libComposer.liveComposer.moduleComposer(inputStructure, 'join')
       // need to format key value from hash and contract format
       let keyStructure = {}
       keyStructure.key = prepareModule.data.hash
