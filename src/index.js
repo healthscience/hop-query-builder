@@ -469,6 +469,7 @@ class HopQuerybuilder extends EventEmitter {
     newPackagingMap.description = fileName
     newPackagingMap.primary = 'true'
     newPackagingMap.api = 'json'
+    newPackagingMap.path = 'json'
     newPackagingMap.apibase = ''
     newPackagingMap.apipath = ''
     newPackagingMap.filename = fileName + '.json'
@@ -492,7 +493,7 @@ class HopQuerybuilder extends EventEmitter {
     // need to match info to reference data types
     newPackagingMap.apicolumns = {}
     newPackagingMap.apicolHolder = {}
-    let packagingRef = this.libComposer.liveComposer.packagingRefLive.packagingPrepare(newPackagingMap)
+    let packagingRef = this.libComposer.liveComposer.packagingRefLive.packagingBlindPrepare(newPackagingMap)
     const dtHASH = this.libComposer.liveComposer.cryptoLive.evidenceProof(packagingRef)
     let contractData = {}
     contractData.key = dtHASH
