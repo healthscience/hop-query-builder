@@ -44,6 +44,7 @@ class HopQuerybuilder extends EventEmitter {
   *
   */
   blindPath = function (beebeeIN, publicLib, fileInfo) {
+    console.log('HQB--blindpath')
     // console.log(util.inspect(publicLib, {showHidden: false, depth: null}))
     let minStartlist = this.minModulesetup()
     // take the genesis and make new instances of the Module Contracts i.e. unique keys
@@ -110,7 +111,7 @@ class HopQuerybuilder extends EventEmitter {
     // Add five days to current date
     futureDate.setDate(futureDate.getDate() + 30)
     futureDate = futureDate.getTime()
-    let controls = { date: computeRefFuture.value.info.controls.date, rangedate: [ computeRefFuture.value.info.controls.date ], sourceTime: [ futureDate ] }
+    let controls = {  xaxis: '', yaxis: [ 'blind1234555554321' ], date: computeRefFuture.value.info.controls.date, rangedate: [ computeRefFuture.value.info.controls.date ], sourceTime: [ futureDate ] }
     computeRefFuture.value.info.controls = controls
     // prepare new compute reference contract
     computeRefFuture.key = '2233344455566'
@@ -513,7 +514,7 @@ class HopQuerybuilder extends EventEmitter {
   */
   prepareSafeFlowStucture = function (moduleContracts, refContracts, fileInfo, LLMdata) {
     console.log('HQB--safelfow stcuture build')
-    console.log(util.inspect(refContracts, {showHidden: false, depth: null}))
+    // console.log(util.inspect(refContracts, {showHidden: false, depth: null}))
     // console.log(util.inspect(refContracts, {showHidden: false, depth: null}))
     let safeFlowQuery = {}
     let modContracts = []
@@ -559,14 +560,14 @@ class HopQuerybuilder extends EventEmitter {
       } else if (tmc.name === 'compute') {
         let dataMCRC = {}
         let extractRC = refContracts.filter(e => e.value.refcontract === 'compute')
-        console.log('HQB--blind path')
-        console.log(extractRC)
+        console.log('HQB--build compute contract')
+        // console.log(extractRC)
         dataMCRC.compute = extractRC  // compute ref. contract plus setttings controls
         // add settings and controls default
         // set time to current in ms
         let currentQtime = new Date()
         const blindDate = currentQtime.getTime()
-        let controls = { date: blindDate, rangedate: [ blindDate ] }
+        let controls = { xaxis: '', yaxis: [ 'blind1234555554321' ], date: blindDate, rangedate: [ blindDate ], category: [ 'none' ] }
         let settings = {
           devices: [],
           data: null,
@@ -585,8 +586,8 @@ class HopQuerybuilder extends EventEmitter {
         inputStructure.value = {}
         inputStructure.value.style = 'compute'
         inputStructure.value.info = dataMCRC
-        console.log('final sturcuture compute')
-        console.log(inputStructure)
+        console.log('HQB--final sturcuture compute')
+        // console.log(inputStructure)
       } else if (tmc.name === 'visualise') {
         let dataMCRC = {}
         let extractRC = refContracts.filter(e => e.value.refcontract === 'visualise')
