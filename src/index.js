@@ -446,13 +446,13 @@ class HopQuerybuilder extends EventEmitter {
 
   /**
   * Build blind reference contracts
-  * @method rextractRefContractsPublicLib
+  * @method extractRefContractsPublicLib
   *
   */
   extractRefContractsPublicLib = function (refContracts, fileName) {
     let refBuilds = []
     for (let rc of refContracts) {
-      if (rc?.value?.refcontract === 'compute' && rc?.value?.computational?.name === 'observation') {
+      if (rc?.value?.refcontract === 'compute' && rc?.value?.computational?.name === 'observation' || rc?.value?.refcontract === 'compute' && rc?.value?.computational?.name === 'average') {
         refBuilds.push(rc)
       } else if (rc?.value?.refcontract === 'visualise' || rc?.value?.computational?.name === 'chart.js library') {
         refBuilds.push(rc)
@@ -513,7 +513,7 @@ class HopQuerybuilder extends EventEmitter {
   *
   */
   prepareSafeFlowStucture = function (moduleContracts, refContracts, fileInfo, LLMdata) {
-    console.log('HQB--safelfow stcuture build')
+    console.log(LLMdata)
     // console.log(util.inspect(refContracts, {showHidden: false, depth: null}))
     // console.log(util.inspect(refContracts, {showHidden: false, depth: null}))
     let safeFlowQuery = {}
@@ -523,7 +523,7 @@ class HopQuerybuilder extends EventEmitter {
       modKeys.push(mc.refcont)
     }
     // which settings from LLM?
-    let visStyle = LLMdata.data.data.visstyle[0].vis
+    let visStyle = 'line' //LLMdata.data.data.visstyle[0].vis
     // form a joined contract, pass in module key only
     let formExpmoduleContract = this.libComposer.liveComposer.experimentComposerJoin(modKeys)
     safeFlowQuery.exp = {}
@@ -558,36 +558,55 @@ class HopQuerybuilder extends EventEmitter {
           inputStructure.value.style = 'packaging'
           inputStructure.value.info = dataMCRC
       } else if (tmc.name === 'compute') {
-        let dataMCRC = {}
-        let extractRC = refContracts.filter(e => e.value.refcontract === 'compute')
-        console.log('HQB--build compute contract')
-        // console.log(extractRC)
-        dataMCRC.compute = extractRC  // compute ref. contract plus setttings controls
-        // add settings and controls default
-        // set time to current in ms
-        let currentQtime = new Date()
-        const blindDate = currentQtime.getTime()
-        let controls = { xaxis: '', yaxis: [ 'blind1234555554321' ], date: blindDate, rangedate: [ blindDate ], category: [ 'none' ] }
-        let settings = {
+        let dataMCRC = {};
+        let extractRC = refContracts.filter(e => 
+          e.value.refcontract === 'compute' && 
+          e.value.computational?.name ===  LLMdata.data.data.input.data.compute // LLMdata.data.compute.type
+        );
+        
+        // Create compute contract structure with type
+        dataMCRC.compute = [
+          {
+            key: extractRC[0].key,
+            value: {
+              refcontract: 'compute',
+              concept: extractRC[0].value.concept,
+              computational: {
+                name: extractRC[0].value.computational.name,
+                type: extractRC[0].value.computational.type,
+                description: extractRC[0].value.computational.description
+              }
+            }
+          }
+        ];
+        
+        // Add settings and controls
+        let currentQtime = new Date();
+        const blindDate = currentQtime.getTime();
+        dataMCRC.controls = {
+          xaxis: '',
+          yaxis: ['blind1234555554321'],
+          date: blindDate,
+          rangedate: [blindDate],
+          category: ['none']
+        };
+        dataMCRC.settings = {
           devices: [],
           data: null,
           compute: '',
           visualise: visStyle,
-          category: [ 'none' ],
+          category: ['none'],
           timeperiod: '',
           xaxis: '',
-          yaxis: [ 'blind1234555554321' ],
+          yaxis: ['blind1234555554321'],
           resolution: '',
           setTimeFormat: ''
-        }
-        dataMCRC.controls = controls
-        dataMCRC.settings = settings
-        inputStructure.style = 'compute'
-        inputStructure.value = {}
-        inputStructure.value.style = 'compute'
-        inputStructure.value.info = dataMCRC
-        console.log('HQB--final sturcuture compute')
-        // console.log(inputStructure)
+        };
+        
+        inputStructure.style = 'compute';
+        inputStructure.value = {};
+        inputStructure.value.style = 'compute';
+        inputStructure.value.info = dataMCRC;
       } else if (tmc.name === 'visualise') {
         let dataMCRC = {}
         let extractRC = refContracts.filter(e => e.value.refcontract === 'visualise')
@@ -598,10 +617,10 @@ class HopQuerybuilder extends EventEmitter {
           data: null,
           compute: '',
           visualise: visStyle,
-          category: [ 'none' ],
+          category: ['none'],
           timeperiod: '',
           xaxis: '',
-          yaxis: [ 'blind1234555554321' ],
+          yaxis: ['blind1234555554321'],
           resolution: '',
           setTimeFormat: '',
           single: true,
