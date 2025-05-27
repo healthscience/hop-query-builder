@@ -45,14 +45,14 @@ class HopQuerybuilder extends EventEmitter {
   */
   blindPath = function (beebeeIN, publicLib, fileInfo) {
     console.log('HQB--blindpath')
-    // console.log(util.inspect(publicLib, {showHidden: false, depth: null}))
+    // console.log(util.inspect(beebeeIN, {showHidden: false, depth: null}))
     let minStartlist = this.minModulesetup()
     // take the genesis and make new instances of the Module Contracts i.e. unique keys
     let tempModContracts = this.tempModuleContractsCreate(minStartlist, fileInfo)
     // extract data, compute and visualisation ref contracts
     let contractsPublic = this.splitMCfromRC(publicLib)
     // extract out observaation compute and charting ref contracts,  data more work required, need save data and then create new data packaging contract
-    let extractedRefs = this.extractRefContractsPublicLib(contractsPublic.reference, fileInfo)
+    let extractedRefs = this.extractRefContractsPublicLib(beebeeIN.data.data.compute[0], contractsPublic.reference, fileInfo)
     // need to make refContract question and data packaging (for blind question input from beebee Done above)
     // next assume joined so provide finalised structure for SF-ECS
     let tempRefContsSF = this.prepareSafeFlowStucture(tempModContracts, extractedRefs, fileInfo, beebeeIN)
@@ -449,20 +449,14 @@ class HopQuerybuilder extends EventEmitter {
   * @method extractRefContractsPublicLib
   *
   */
-  extractRefContractsPublicLib = function (refContracts, fileName) {
+  extractRefContractsPublicLib = function (computeContext, refContracts, fileName) {
     let refBuilds = []
     for (let rc of refContracts) {
-      if (rc?.value?.refcontract === 'compute' && rc?.value?.computational?.name === 'observation' || rc?.value?.refcontract === 'compute' && rc?.value?.computational?.name === 'average') {
+      if (rc?.value?.refcontract === 'compute' && rc?.value?.computational.name === computeContext.compute) {
         refBuilds.push(rc)
       } else if (rc?.value?.refcontract === 'visualise' || rc?.value?.computational?.name === 'chart.js library') {
         refBuilds.push(rc)
       }
-      /* else if (rc.value.refcontract === 'packaging') {
-        console.log('reccc')
-        console.log(rc)
-        console.log(rc.value)
-        refBuilds.push(rc)
-      } */
     }
     // need to build a custom data packaging ref contract
     const newPackagingMap = {}
@@ -513,8 +507,10 @@ class HopQuerybuilder extends EventEmitter {
   *
   */
   prepareSafeFlowStucture = function (moduleContracts, refContracts, fileInfo, LLMdata) {
-    console.log(LLMdata)
-    // console.log(util.inspect(refContracts, {showHidden: false, depth: null}))
+    console.log('HQB---input prepareSFlow')
+    // console.log(LLMdata)
+    // console.log(LLMdata.data)
+    // console.log(util.inspect(LLMdata, {showHidden: false, depth: null}))
     // console.log(util.inspect(refContracts, {showHidden: false, depth: null}))
     let safeFlowQuery = {}
     let modContracts = []
@@ -561,7 +557,7 @@ class HopQuerybuilder extends EventEmitter {
         let dataMCRC = {};
         let extractRC = refContracts.filter(e => 
           e.value.refcontract === 'compute' && 
-          e.value.computational?.name ===  LLMdata.data.data.input.data.compute // LLMdata.data.compute.type
+          e.value.computational?.name ===  LLMdata.data.data.compute[0].compute
         );
         
         // Create compute contract structure with type
@@ -574,7 +570,10 @@ class HopQuerybuilder extends EventEmitter {
               computational: {
                 name: extractRC[0].value.computational.name,
                 type: extractRC[0].value.computational.type,
-                description: extractRC[0].value.computational.description
+                description: extractRC[0].value.computational.description,
+                code: extractRC[0].value.computational.code,
+                hash: extractRC[0].value.computational.hash,
+                mode: extractRC[0].value.computational.mode
               }
             }
           }
