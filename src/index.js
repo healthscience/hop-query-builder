@@ -44,7 +44,6 @@ class HopQuerybuilder extends EventEmitter {
   *
   */
   blindPath = function (beebeeIN, publicLib, fileInfo) {
-    console.log('HQB--blindpath')
     // console.log(util.inspect(beebeeIN, {showHidden: false, depth: null}))
     let minStartlist = this.minModulesetup()
     // take the genesis and make new instances of the Module Contracts i.e. unique keys
@@ -435,12 +434,6 @@ class HopQuerybuilder extends EventEmitter {
     let contractList = {}
     contractList.modules = modContracts
     contractList.reference = refContracts
-    /* for (let ref of refContracts) {
-      if (ref.value.refcontract === 'datatype') {
-        console.log('split')
-        console.log(ref)
-      }
-    } */
     return contractList
   }
 
@@ -472,6 +465,12 @@ class HopQuerybuilder extends EventEmitter {
     newPackagingMap.tablestructure = []
     newPackagingMap.tidy = {}
     newPackagingMap.category = {}
+    newPackagingMap.devicesList = ''
+    newPackagingMap.deviceColumns = ''
+    newPackagingMap.devicequery = ''
+    newPackagingMap.firmwarequery = ''
+    newPackagingMap.deviceColumnID = ''
+    // device peer input
     let deviceInfo = {}
     deviceInfo.id = fileName
     deviceInfo.device_name = fileName
@@ -507,11 +506,7 @@ class HopQuerybuilder extends EventEmitter {
   *
   */
   prepareSafeFlowStucture = function (moduleContracts, refContracts, fileInfo, LLMdata) {
-    console.log('HQB---input prepareSFlow')
-    // console.log(LLMdata)
-    // console.log(LLMdata.data)
-    // console.log(util.inspect(LLMdata, {showHidden: false, depth: null}))
-    // console.log(util.inspect(refContracts, {showHidden: false, depth: null}))
+     // console.log(util.inspect(refContracts, {showHidden: false, depth: null}))
     let safeFlowQuery = {}
     let modContracts = []
     let modKeys = []
@@ -558,10 +553,10 @@ class HopQuerybuilder extends EventEmitter {
         let extractRC = refContracts.filter(e => 
           e.value.refcontract === 'compute' && 
           e.value.computational?.name ===  LLMdata.data.data.compute[0].compute
-        );
-        
+        )
         // Create compute contract structure with type
-        dataMCRC.compute = [
+        dataMCRC.computational = extractRC[0].value.computational
+        dataMCRC.compute = 
           {
             key: extractRC[0].key,
             value: {
@@ -577,8 +572,6 @@ class HopQuerybuilder extends EventEmitter {
               }
             }
           }
-        ];
-        
         // Add settings and controls
         let currentQtime = new Date();
         const blindDate = currentQtime.getTime();
@@ -587,7 +580,8 @@ class HopQuerybuilder extends EventEmitter {
           yaxis: ['blind1234555554321'],
           date: blindDate,
           rangedate: [blindDate],
-          category: ['none']
+          category: ['none'],
+          tidy: true
         };
         dataMCRC.settings = {
           devices: [],
