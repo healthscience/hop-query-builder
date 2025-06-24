@@ -51,7 +51,7 @@ class HopQuerybuilder extends EventEmitter {
     // extract data, compute and visualisation ref contracts
     let contractsPublic = this.splitMCfromRC(publicLib)
     // extract out observaation compute and charting ref contracts,  data more work required, need save data and then create new data packaging contract
-    let extractedRefs = this.extractRefContractsPublicLib(beebeeIN.data.data.compute[0], contractsPublic.reference, fileInfo)
+    let extractedRefs = this.extractRefContractsPublicLib(beebeeIN.data.data.input.data, contractsPublic.reference, fileInfo)
     // need to make refContract question and data packaging (for blind question input from beebee Done above)
     // next assume joined so provide finalised structure for SF-ECS
     let tempRefContsSF = this.prepareSafeFlowStucture(tempModContracts, extractedRefs, fileInfo, beebeeIN)
@@ -552,7 +552,7 @@ class HopQuerybuilder extends EventEmitter {
         let dataMCRC = {};
         let extractRC = refContracts.filter(e => 
           e.value.refcontract === 'compute' && 
-          e.value.computational?.name ===  LLMdata.data.data.compute[0].compute
+          e.value.computational?.name ===  LLMdata.data.data.input.data.compute
         )
         // Create compute contract structure with type
         dataMCRC.computational = extractRC[0].value.computational
