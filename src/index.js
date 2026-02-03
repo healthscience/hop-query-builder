@@ -43,7 +43,9 @@ class HopQuerybuilder extends EventEmitter {
   * @method blindPath
   *
   */
-  blindPath = function (beebeeIN, publicLib, fileInfo) {
+  blindPath = function (computeIN, publicLib, fileInfo) {
+    console.log('hQB blind')
+    console.log(computeIN)
     // console.log(util.inspect(beebeeIN, {showHidden: false, depth: null}))
     let minStartlist = this.minModulesetup()
     // take the genesis and make new instances of the Module Contracts i.e. unique keys
@@ -51,10 +53,10 @@ class HopQuerybuilder extends EventEmitter {
     // extract data, compute and visualisation ref contracts
     let contractsPublic = this.splitMCfromRC(publicLib)
     // extract out observaation compute and charting ref contracts,  data more work required, need save data and then create new data packaging contract
-    let extractedRefs = this.extractRefContractsPublicLib(beebeeIN.data.data.input.data, contractsPublic.reference, fileInfo)
+    let extractedRefs = this.extractRefContractsPublicLib(computeIN, contractsPublic.reference, fileInfo)
     // need to make refContract question and data packaging (for blind question input from beebee Done above)
     // next assume joined so provide finalised structure for SF-ECS
-    let tempRefContsSF = this.prepareSafeFlowStucture(tempModContracts, extractedRefs, fileInfo, beebeeIN)
+    let tempRefContsSF = this.prepareSafeFlowStucture(tempModContracts, extractedRefs, fileInfo, computeIN.compute)
     return tempRefContsSF
   }
 
@@ -505,7 +507,7 @@ class HopQuerybuilder extends EventEmitter {
   * @method prepareSafeFlowStucture
   *
   */
-  prepareSafeFlowStucture = function (moduleContracts, refContracts, fileInfo, LLMdata) {
+  prepareSafeFlowStucture = function (moduleContracts, refContracts, fileInfo, computeIN) {
      // console.log(util.inspect(refContracts, {showHidden: false, depth: null}))
     let safeFlowQuery = {}
     let modContracts = []
@@ -540,7 +542,7 @@ class HopQuerybuilder extends EventEmitter {
         inputStructure.value = {}
         inputStructure.value.style = 'question'
         inputStructure.value.info = dataMCRC
-       } else if(tmc.name === 'packaging') {
+      } else if(tmc.name === 'packaging') {
           let dataMCRC = {}
           let extractRC = refContracts.filter(e => e.value.refcontract === 'packaging')
           dataMCRC = extractRC[0] // data packaging contract
@@ -550,10 +552,14 @@ class HopQuerybuilder extends EventEmitter {
           inputStructure.value.info = dataMCRC
       } else if (tmc.name === 'compute') {
         let dataMCRC = {};
+        console.log(refContracts)
+        console.log(computeIN)
         let extractRC = refContracts.filter(e => 
           e.value.refcontract === 'compute' && 
-          e.value.computational?.name ===  LLMdata.data.data.input.data.compute
+          e.value.computational?.name ===  computeIN
         )
+        console.log('extractRC compute')
+        extractRC
         // Create compute contract structure with type
         dataMCRC.computational = extractRC[0].value.computational
         dataMCRC.compute = 
