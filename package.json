@@ -6,7 +6,10 @@
   "type": "module",
   "scripts": {
     "start": "node src/index.js",
-    "test": "test"
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "vitest": "^1.0.0"
   },
   "repository": {
     "type": "git",

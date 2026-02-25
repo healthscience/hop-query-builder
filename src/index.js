@@ -550,16 +550,14 @@ class HopQuerybuilder extends EventEmitter {
           inputStructure.value = {}
           inputStructure.value.style = 'packaging'
           inputStructure.value.info = dataMCRC
+          // ECS Pipeline Component Mapping
+          inputStructure.value.component = 'DataRequestComponent'
       } else if (tmc.name === 'compute') {
         let dataMCRC = {};
-        console.log(refContracts)
-        console.log(computeIN)
         let extractRC = refContracts.filter(e => 
           e.value.refcontract === 'compute' && 
           e.value.computational?.name ===  computeIN
         )
-        console.log('extractRC compute')
-        extractRC
         // Create compute contract structure with type
         dataMCRC.computational = extractRC[0].value.computational
         dataMCRC.compute = 
@@ -580,6 +578,8 @@ class HopQuerybuilder extends EventEmitter {
           }
         // Add settings and controls
         let currentQtime = new Date();
+        // Anchor to 24-hour block for coherence ledger
+        currentQtime.setHours(0,0,0,0);
         const blindDate = currentQtime.getTime();
         dataMCRC.controls = {
           xaxis: '',
@@ -587,7 +587,8 @@ class HopQuerybuilder extends EventEmitter {
           date: blindDate,
           rangedate: [blindDate],
           category: ['none'],
-          tidy: true
+          tidy: true,
+          segmentation: '24h' // Explicitly state 24h requirement
         };
         dataMCRC.settings = {
           devices: [],
@@ -595,7 +596,7 @@ class HopQuerybuilder extends EventEmitter {
           compute: '',
           visualise: visStyle,
           category: ['none'],
-          timeperiod: '',
+          timeperiod: '24h', // Default to 24h for hashing
           xaxis: '',
           yaxis: ['blind1234555554321'],
           resolution: '',
@@ -606,6 +607,8 @@ class HopQuerybuilder extends EventEmitter {
         inputStructure.value = {};
         inputStructure.value.style = 'compute';
         inputStructure.value.info = dataMCRC;
+        // ECS Pipeline Component Mapping
+        inputStructure.value.component = 'ComputeContractComponent';
       } else if (tmc.name === 'visualise') {
         let dataMCRC = {}
         let extractRC = refContracts.filter(e => e.value.refcontract === 'visualise')
@@ -646,6 +649,7 @@ class HopQuerybuilder extends EventEmitter {
     safeFlowQuery.modules = modContracts
     safeFlowQuery.reftype = 'ignore'
     safeFlowQuery.type = 'safeflow'
+    safeFlowQuery.ecs = true // Flag for EntitiesManager to use ECS path
     return safeFlowQuery
   }
 
