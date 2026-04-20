@@ -553,11 +553,15 @@ class HopQuerybuilder extends EventEmitter {
           // ECS Pipeline Component Mapping
           inputStructure.value.component = 'DataRequestComponent'
       } else if (tmc.name === 'compute') {
+        console.log('compute  mathinc startartart')
+        console.log(refContracts)
         let dataMCRC = {};
         let extractRC = refContracts.filter(e => 
           e.value.refcontract === 'compute' && 
           e.value.computational?.name ===  computeIN
         )
+        console.log('compute coaontra maththththh')
+        console.log(extractRC)
         // Create compute contract structure with type
         dataMCRC.computational = extractRC[0].value.computational
         dataMCRC.compute = 
